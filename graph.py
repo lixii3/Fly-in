@@ -57,15 +57,19 @@ class Zone:
         self.__drones_in -= 1
 
 
-class OrientedArch:
+class Connection:
     def __init__(self, from_zone: Zone, to_zone: Zone) -> None:
         self.arch: tuple[Zone, Zone] = (from_zone, to_zone)
         self.cost: int = int(from_zone.get_type().value[1])
 
+
 class Graph:
-    def __init__(self, name: str):
+    def __init__(self, name: str = ''):
         self.name = name
-        self.zone_list: List[Zone] = []
+        self.__zone_list: List[Zone] = []
+
+    def get_zones(self) -> List[Zone]:
+        return self.__zone_list
 
     def add_start(self, start: Zone) -> None:
         '''Adds/overrwrites a starting zone to the graph'''
@@ -80,8 +84,10 @@ class Graph:
         if not end.get_type() == ZoneType.END:
             raise GraphException("Ending zone must be of type 'end', "
                                  "yours is of type "
-                                 f"'{end.get_type().value['name']}'")
+                                 f"'{end.get_type().value[0]}'")
         self.end = end
+    
+
 
 
 if __name__ == "__main__":
