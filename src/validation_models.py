@@ -1,4 +1,4 @@
-from src.utils import ParsingTags, ParsingColors, ParsingZones
+from utils import ParsingTags, ParsingColors, ParsingZones
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 from typing import List
@@ -54,10 +54,11 @@ class HubData(BaseModel):
         # se il nome contiene spazi o un dash
         elif ' ' in self.name or '-' in self.name:
             raise ValueError("Hub name can't contain spaces or dashes")
+        if not self.metadata:
+            self.metadata = MetaData(tag=self.tag, z_type=ParsingZones.NORMAL, max_drones=1)
         # se contiene metadata di tipo connection
         elif self.metadata and self.metadata.tag == ParsingTags.CONNECTION:
             ValueError(f"Invalid metadata for hub: '{self.name}'")
-
         return self
 
 
@@ -76,6 +77,10 @@ class ConnectionData(BaseModel):
                              "and must contain at most one dash")
         elif self.metadata and not self.metadata.tag == ParsingTags.CONNECTION:
             ValueError(f"Invalid metadata for connection: '{self.name}'")
+        if not self.metadata:
+            self.metadata = MetaData(tag=ParsingTags.CONNECTION, max_link_capacity=1)
+        self.zoneA: str = self.name.split('-')[0]
+        self.zoneB: str = self.name.split('-')[1]
         return self
 
 

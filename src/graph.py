@@ -1,6 +1,7 @@
-from enum import Enum
-from typing import List, Dict
-from src.validation_models import MapData
+from zone import Zone
+from connection import Connection
+from typing import List
+from validation_models import MapData
 
 
 class GraphException(Exception):
@@ -8,30 +9,32 @@ class GraphException(Exception):
         super().__init__(msg)
 
 
-class Connection:
-    def __init__(self, from_zone: Zone, to_zone: Zone) -> None:
-        self.arch: tuple[Zone, Zone] = (from_zone, to_zone)
-        self.cost: int = int(from_zone.get_type().value[1])
-
-
 class Graph:
     def __init__(self, data: MapData):
-        self.name = data.name
-        self.__zone_list: List[Zone] = []
+        self.__name = data.name
+        self.__nb_drones = data.nb_drones
+        self.__zones: List[Zone] = []
+        self.__connections: List[Connection] = []
+
+        for h in data.hubs:
+            self.__zones.append(Zone(h))
+        for c in data.connections:
+            self.__connections.append(Connection(c, self.__zones))
+
+    ##### GETTERS #######
+    def get_name(self) -> str:
+        return self.__name
+    
+    def get_nb_drones(self) -> int:
+        return self.__nb_drones
 
     def get_zones(self) -> List[Zone]:
-        return self.__zone_list
+        return self.__zones
 
-        self.end = end
-    
+    def get_connections(self) -> List[Connection]:
+        return self.__connections
 
 
 
 if __name__ == "__main__":
-    start = Zone('start', ZoneType.START, 2)
-    start = Zone('start', ZoneType.START, 2)
-    g = Graph('G')
-    try:
-        g.add_start(start)
-    except GraphException as e:
-        print(e)
+   pass

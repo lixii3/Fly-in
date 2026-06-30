@@ -1,6 +1,6 @@
-from src.graph import Graph
-from src.utils import ParsingColors, ParsingTags, ParsingZones
-from src.validation_models import MetaData, ConnectionData, HubData, MapData
+from graph import Graph
+from utils import ParsingColors, ParsingTags, ParsingZones
+from validation_models import MetaData, ConnectionData, HubData, MapData
 from typing import List, Dict
 from pydantic import ValidationError
 from typing_extensions import Self
@@ -21,7 +21,7 @@ class Parser:
     def parse_map(map: str) -> Graph:
         error_list: List[ParsingException] = []
         msg: str
-        graph: Graph = Graph()
+        graph: Graph
         g_name: str = map.rsplit("/", 1)[-1].split('.')[0]
         nb_drones: int
         hub_list: List[HubData] = []
@@ -50,8 +50,7 @@ class Parser:
                             msg = f"Error on line {nb_line} of map '{g_name}':"
                             " first line must be 'nb_drones'"
                             error_list.append(ParsingException(g_name,
-                                                               nb_line,
-                                                               msg))
+                                                               nb_line))
                         else:
                             row_count += 1
                         continue
@@ -60,8 +59,7 @@ class Parser:
                         msg = f"Error on line {nb_line} of map '{name}': "
                         "first line must be 'nb_drones'"
                         error_list.append(ParsingException(g_name,
-                                                           nb_line,
-                                                           msg))
+                                                           nb_line))
                         continue
                     try:
                         data = Parser._parse_zone(row)
@@ -71,8 +69,7 @@ class Parser:
                             conn_list.append(data)
                     except ParsingException:
                         error_list.append(ParsingException(g_name,
-                                                           nb_line,
-                                                           msg))
+                                                           nb_line))
                     nb_line += 1
         except OSError as e:
             raise e
@@ -180,5 +177,4 @@ class Parser:
 
 
 if __name__ == "__main__":
-    b = 'hub'
-    print(b == ParsingTags.HUB)
+    Parser.parse_map("maps/easy/01_linear_path.txt")

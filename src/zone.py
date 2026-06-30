@@ -1,5 +1,6 @@
-from src.utils import ParsingZones
-from src.validation_models import HubData
+from utils import ParsingZones
+from validation_models import HubData
+from typing import Final
 
 # class ZoneException(Exception):
 #     def __init__(self, msg: str):
@@ -12,28 +13,32 @@ class Zone:
         self.__name = data.name
         self.__x = data.x
         self.__y = data.y
-        if data.metadata.z_type == ParsingZones.NORMAL:
-            self.__type == ParsingZones.NORMAL
-        else:
-            self.__type = data.metadata.z_type
+        self.__type = data.metadata.z_type
         self.__cost = self.__type.value[1]
         self._color = data.metadata.color
-        self.__max_drones = data.metadata.max_drones
+        self.MAX_DRONES: Final[int]= data.metadata.max_drones
 
-    # def get_name(self) -> str:
-    #     return self.__name
+    ##### GETTERS #######
+    def get_name(self) -> str:
+        return self.__name
 
-    # def get_type(self) -> ParsingZones:
-    #     return self.__type
+    def get_x(self) -> int:
+        return self.__x
 
-    # def get_max_drones(self) -> int:
-    #     return self.__max_drones
+    def get_y(self) -> int:
+        return self.__y
+    
+    def get_cost(self) -> int:
+        return self.__cost
+    
+    def get_type(self) -> ParsingZones:
+        return self.__type
 
-    # def get_color(self) -> str:
-    #     return self.__color
+    def get_color(self) -> str:
+        return self.__color
 
-    # def increment_drones(self) -> None:
-    #     self.__drones_in += 1
+    def increment_drones(self) -> None:
+        self.__drones_in += 1
 
-    # def decrement_drones(self) -> None:
-    #     self.__drones_in -= 1
+    def decrement_drones(self) -> None:
+        self.__drones_in -= 1
