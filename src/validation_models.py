@@ -5,6 +5,7 @@ from typing import List
 
 
 class MetaData(BaseModel):
+
     tag: ParsingTags
     z_type: ParsingZones | None = None
     color: ParsingColors = ParsingColors.WHITE
@@ -13,23 +14,23 @@ class MetaData(BaseModel):
 
     @model_validator(mode="after")
     def validator(self) -> Self:
-
         if self.tag == ParsingTags.CONNECTION and not self.max_link_capacity:
             self.max_link_capacity = 1
         if not self.tag == ParsingTags.CONNECTION and self.max_link_capacity:
             raise ValueError("hubs expect "
                              "'max_link_capacity' field to be None")
-        # start e end non hanno maxdrones e devono essere normal
         if (self.tag == ParsingTags.START_HUB or
-            self.tag == ParsingTags.END_HUB) and self.z_type is None:
-            self.z_type == ParsingZones.NORMAL
+            self.tag == ParsingTags.END_HUB):
+            # ignoro max_drones
+            if self.max_drones:
+                self.max_drones = None
+            # start e end devono essere normal
+            if self.z_type is None:
+                self.z_type == ParsingZones.NORMAL
+            elif self.z_type != ParsingZones.NORMAL:
+                raise ValueError("Start / end hub can't have a "
+                                "must be normal zones")
 
-        if (self.tag == ParsingTags.START_HUB or
-            self.tag == ParsingTags.END_HUB) and\
-                (self.max_drones or self.z_type != ParsingZones.NORMAL or
-                 self.z_type is not None):
-            raise ValueError("Start / end hub can't have a "
-                             "maximum number of drones allowed and must be normal zones")
         if self.tag == ParsingTags.CONNECTION and\
                 (self.z_type or self.max_drones):
             raise ValueError("'connection' type_data expects "
@@ -74,7 +75,7 @@ class ConnectionData(BaseModel):
             raise ValueError("Tag must be of type ParsingTags.CONNECTION")
         elif ' ' in self.name or self.name.count('-') != 1:
             raise ValueError("Connection name can't contain spaces "
-                             "and must contain at most one dash")
+                             "and must contain exactly one dash")
         elif self.metadata and not self.metadata.tag == ParsingTags.CONNECTION:
             ValueError(f"Invalid metadata for connection: '{self.name}'")
         if not self.metadata:
@@ -98,10 +99,17 @@ class MapData(BaseModel):
         connA = [a.name.split('-')[0] for a in self.connections]
         connB = [b.name.split('-')[1] for b in self.connections]
         links = list(zip(connA, connB))
+        visti: set[tuple[str, str]] = {}
+        # self loops
         for ln in links:
+            l1 = tuple(sorted(ln))
             if ln[0] == ln[1]:
                 raise ValueError("Self loop detected: "
                                  f"'{ln[0]}-{ln[1]}'")
+            elif l1 in visti:
+                raise ValueError(f"Duplicted connection: '{l[0]}-{l[1]}'")
+            else:
+                visti.add(l1)
 
         for h in self.hubs:
             if h.tag == ParsingTags.START_HUB:
