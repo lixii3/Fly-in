@@ -14,6 +14,9 @@ class ParsingException(Exception):
         self.fmsg = f"Error on line {line} in map '{map_name}': {msg}"
         super().__init__(self.fmsg, map_name, line)
 
+    def __str__(self):
+        return self.fmsg
+
 
 class Parser:
 
@@ -73,11 +76,11 @@ class Parser:
         # stampa errori e raise finale
         if len(error_list) > 0:
             for e in error_list:
-                print(e.fmsg)
-            raise ParsingException(msg="Try with a different map or fix this one pls!")
+                print(e)
+            raise ParsingException(msg="Invalid map data!")
         try:
             map_data = MapData(name=g_name, nb_drones=nb_drones,
-                           hubs=hub_list, connections=conn_list)
+                               hubs=hub_list, connections=conn_list)
         except ValidationError as e:
             raise e
         graph = Graph(map_data)
@@ -100,17 +103,28 @@ class Parser:
         line: str = row.split('[')[0]
         data: ConnectionData | HubData
         tag: ParsingTags
+        meta_line: str
         metadata: MetaData | None
         name: str = ""
         x: int = -1
         y: int = -1
+
+        if len(row.split('[')) == 2:
+            meta_line = row.split('[')[1]
+            if meta_line.count("]") == 1 and meta_line.strip().endswith(']'):
+                raise ParsingException(msg="Parser 115: invalid metadata")
+            meta_line = meta_line.split("]")[0]
+            try:
+                metadata = Parser._parse_metadata(meta_line)
+            except ParsingException as e:
+                raise e
 
         if ':' not in line:
             raise ParsingException(msg="Invalid tag")
         tag = ParsingTags.getTag(line.split(':')[0])
         if tag is None:
             raise ParsingException(msg="Invalid tag")
-        line.split(':')[1]
+        line = line.split(':')[1]
         # se e' una hub trovo x e y
         args = line.strip().split(' ')
         if tag != ParsingTags.CONNECTION and len(args) == 3:
@@ -124,13 +138,12 @@ class Parser:
                 raise ParsingException(msg=e.args[0])
 
         try:
-            metadata = Parser._parse_metadata(row, tag)
             if tag != ParsingTags.CONNECTION:
                 data = HubData(tag=tag, name=name, x=x, y=y, metadata=metadata)
             else:
                 data = ConnectionData(tag=tag, name=name, metadata=metadata)
         except ValidationError as e:
-            raise ParsingException(msg=e.errors())
+            raise ParsingException(msg=e.errors()[0]['msg'])
         except ParsingException as e:
             raise e
         return data
@@ -189,5 +202,5 @@ class Parser:
 if __name__ == "__main__":
     try:
         g: Graph = Parser.parse_map("maps/easy/01_linear_path.txt")
-    except ParsingException as e:
-        print(e.msg)
+    except (ParsingException, OSError) as e:
+        print(e)
