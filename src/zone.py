@@ -14,8 +14,8 @@ class Zone:
         self.__x = data.x
         self.__y = data.y
         self.__type = data.metadata.z_type
-        self.__cost = self.__type.value[1]
-        self._color = data.metadata.color
+        self.__cost = self.__type.value
+        self.__color = data.metadata.color
         self.MAX_DRONES: Final[int]= data.metadata.max_drones
 
     ##### GETTERS #######

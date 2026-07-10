@@ -33,7 +33,30 @@ class Graph:
 
     def get_connections(self) -> List[Connection]:
         return self.__connections
+    
+    def printGraph(self) -> str:
+        lines = [
+            f"Graph: {self.__name}",
+            f"Drones: {self.__nb_drones}",
+            "Zones:"
+        ]
 
+        for zone in self.__zones:
+            lines.append(
+                f"  - {zone.get_name()}: x={zone.get_x()}, y={zone.get_y()}, "
+                f"type={zone.get_type().name}, cost={zone.get_cost()}, "
+                f"color={zone.get_color()}, max_drones={zone.MAX_DRONES}"
+            )
+
+        lines.append("Connections:")
+        for connection in self.__connections:
+            zone_names = sorted([z.get_name() for z in connection.get_arch()])
+            lines.append(
+                f"  - {connection.get_name()}: {zone_names[0]} <-> {zone_names[1]}, "
+                f"color={connection.get_color()}, max_link_capacity={connection.MAX_LINK_CAPACITY}"
+            )
+
+        return "\n".join(lines)
 
 
 if __name__ == "__main__":

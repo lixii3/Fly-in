@@ -1,5 +1,5 @@
 from utils import ParsingTags, ParsingColors, ParsingZones
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing_extensions import Self
 from typing import List
 
@@ -26,7 +26,7 @@ class MetaData(BaseModel):
                 self.max_drones = None
             # start e end devono essere normal
             if self.z_type is None:
-                self.z_type == ParsingZones.NORMAL
+                self.z_type = ParsingZones.NORMAL
             elif self.z_type != ParsingZones.NORMAL:
                 raise ValueError("Start / end hub can't have a "
                                 "must be normal zones")
@@ -37,6 +37,8 @@ class MetaData(BaseModel):
                              "fields 'max_drones' and 'zone' to be None")
         if self.z_type == ParsingZones.BLOCKED:
             self.max_drones = 0
+        elif self.z_type == None and self.tag != ParsingTags.CONNECTION:
+            self.z_type = ParsingZones.NORMAL
         return self
 
 
@@ -59,7 +61,7 @@ class HubData(BaseModel):
             self.metadata = MetaData(tag=self.tag, z_type=ParsingZones.NORMAL, max_drones=1)
         # se contiene metadata di tipo connection
         elif self.metadata and self.metadata.tag == ParsingTags.CONNECTION:
-            ValueError(f"Invalid metadata for hub: '{self.name}'")
+            raise ValueError(f"Invalid metadata for hub: '{self.name}'")
         return self
 
 
@@ -67,6 +69,8 @@ class ConnectionData(BaseModel):
     tag: ParsingTags = ParsingTags.CONNECTION
     name: str = Field(min_length=3)
     metadata: MetaData | None = None
+    zoneA: str = ""
+    zoneB: str = ""
 
     @model_validator(mode="after")
     def validator(self) -> Self:
@@ -77,11 +81,14 @@ class ConnectionData(BaseModel):
             raise ValueError("Connection name can't contain spaces "
                              "and must contain exactly one dash")
         elif self.metadata and not self.metadata.tag == ParsingTags.CONNECTION:
-            ValueError(f"Invalid metadata for connection: '{self.name}'")
+            raise ValueError(f"Invalid metadata for connection: '{self.name}'")
         if not self.metadata:
             self.metadata = MetaData(tag=ParsingTags.CONNECTION, max_link_capacity=1)
-        self.zoneA: str = self.name.split('-')[0]
-        self.zoneB: str = self.name.split('-')[1]
+        self.zoneA = self.name.split('-')[0]
+        self.zoneB = self.name.split('-')[1]
+        if not self.zoneA or not self.zoneB or\
+            (self.zoneA == self.zoneB):
+            raise ValueError('Invalid connection name')
         return self
 
 
@@ -96,18 +103,17 @@ class MapData(BaseModel):
         has_start: int = 0
         has_end: int = 0
         names = [h.name for h in self.hubs]
-        connA = [a.name.split('-')[0] for a in self.connections]
-        connB = [b.name.split('-')[1] for b in self.connections]
+        connA = [c.zoneA for c in self.connections]
+        connB = [c.zoneB for c in self.connections]
+
         links = list(zip(connA, connB))
-        visti: set[tuple[str, str]] = {}
-        # self loops
+        visti: set[tuple[str, str]] = set()
+        
+        # check for duplicated connections
         for ln in links:
-            l1 = tuple(sorted(ln))
-            if ln[0] == ln[1]:
-                raise ValueError("Self loop detected: "
-                                 f"'{ln[0]}-{ln[1]}'")
-            elif l1 in visti:
-                raise ValueError(f"Duplicted connection: '{l[0]}-{l[1]}'")
+            l1: tuple[str, str] = tuple(sorted(ln))
+            if l1 in visti:
+                raise ValueError(f"Duplicted connection: '{ln[0]}-{ln[1]}'")
             else:
                 visti.add(l1)
 
@@ -117,7 +123,7 @@ class MapData(BaseModel):
             elif h.tag == ParsingTags.END_HUB:
                 has_end += 1
             # controllo che le hubs siano ben connesse
-            if h.name not in connA or h.name not in connB:
+            if h.name not in connA and h.name not in connB:
                 raise ValueError("Unreachable node")
             elif names.count(h.name) != 1:
                 raise ValueError(f"Duplicated hub name in map: '{h.name}")

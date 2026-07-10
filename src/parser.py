@@ -104,38 +104,44 @@ class Parser:
         data: ConnectionData | HubData
         tag: ParsingTags
         meta_line: str
-        metadata: MetaData | None
+        metadata: MetaData = None
         name: str = ""
         x: int = -1
         y: int = -1
 
-        if len(row.split('[')) == 2:
-            meta_line = row.split('[')[1]
-            if meta_line.count("]") == 1 and meta_line.strip().endswith(']'):
-                raise ParsingException(msg="Parser 115: invalid metadata")
-            meta_line = meta_line.split("]")[0]
-            try:
-                metadata = Parser._parse_metadata(meta_line)
-            except ParsingException as e:
-                raise e
 
         if ':' not in line:
-            raise ParsingException(msg="Invalid tag")
+            raise ParsingException(msg="Missing ':' after tag")
         tag = ParsingTags.getTag(line.split(':')[0])
         if tag is None:
             raise ParsingException(msg="Invalid tag")
+
         line = line.split(':')[1]
-        # se e' una hub trovo x e y
         args = line.strip().split(' ')
+
+        # se e' una hub trovo x e y
         if tag != ParsingTags.CONNECTION and len(args) == 3:
             name = args[0]
             try:
-                x = int(line.strip().split(' ')[1])
-                y = int(line.strip().split(' ')[2])
-                if x < 0 or y < 0:
-                    raise ValueError("Coordinates must be positive integers")
+                x = int(args[1])
+                y = int(args[2])
             except ValueError as e:
                 raise ParsingException(msg=e.args[0])
+        elif tag == ParsingTags.CONNECTION and len(args) == 1:
+            name = args[0]
+        else:
+            raise ParsingException(msg=f"Parser 133: Invalid line format for data of type {tag.value}")
+
+        if len(row.split('[')) == 2:
+            meta_line = row.split('[')[1]
+            if meta_line.count("]") == 1 and meta_line.strip().endswith(']'):
+                meta_line = meta_line.split("]")[0]
+                try:
+                    metadata = Parser._parse_metadata(meta_line, tag)
+                except ParsingException as e:
+                    raise e
+            else:
+                raise ParsingException(msg='Parser 121: Invalid metadata')
 
         try:
             if tag != ParsingTags.CONNECTION:
@@ -152,17 +158,8 @@ class Parser:
     def _parse_metadata(row: str, tag: ParsingTags) -> MetaData:
         data: MetaData
         _tags: tuple = ('color', 'zone', 'max_drones', 'max_link_capacity')
-        # controllo e tolgo le quadre
-        if len(row.split('[')) == 2:
-            line = row.split('[')[1]
-            if not line.count("]") == 1 and not line.strip().endswith(']'):
-                raise ParsingException(msg="Parser 144: invalid metadata")
-            line = line.split("]")[0]
-        else:
-            raise ParsingException(msg="invalid metadata")
-
         meta_dict: Dict[str, str] = {}
-        metadata: List[str] = line.split(' ')
+        metadata: List[str] = row.split(' ')
         key: str
         value: str
 
@@ -194,13 +191,14 @@ class Parser:
                             max_drones=meta_dict.get('max_drones'),
                             max_link_capacity=meta_dict.get('max_link_capacity'))
         except ValidationError as e:
-            print(e)
             raise ParsingException(f"invalid metadata for type {tag}")
         return data
 
 
 if __name__ == "__main__":
     try:
-        g: Graph = Parser.parse_map("maps/easy/01_linear_path.txt")
+        g: Graph = Parser.parse_map("maps/easy/02_simple_fork.txt")
+        print(g.printGraph())
     except (ParsingException, OSError) as e:
-        print(e)
+        print(e.msg)
+    

@@ -13,12 +13,12 @@ class ConnectionException(Exception):
 class Connection:
     def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
         self.__name = data.name
-        self.__arch: set[Zone, Zone] = {}
+        self.__arch: set[Zone, Zone] = set()
         self.__color = data.metadata.color
         self.MAX_LINK_CAPACITY: Final[int] = data.metadata.max_link_capacity
 
         for z in zones:
-            if z.get_name == data.zoneA or z.get_name == data.zoneB:
+            if z.get_name() == data.zoneA or z.get_name() == data.zoneB:
                 self.__arch.add(z)
         if len(self.__arch) != 2:
             raise ConnectionException("Invalid zone list parameter")
