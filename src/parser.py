@@ -7,7 +7,8 @@ from typing_extensions import Self
 
 
 class ParsingException(Exception):
-    def __init__(self, map_name: str = '', line: int = 0, msg: str | None = None):
+    def __init__(self, map_name: str = '', line: int = 0,
+                 msg: str | None = None):
         self.msg = msg
         self.map = map_name
         self.line = line
@@ -17,6 +18,13 @@ class ParsingException(Exception):
     def __str__(self):
         return self.fmsg
 
+class MultipleParsingExceptions(Exception):
+    def __init__(self, errors: list[ParsingException]):
+        self.errors = errors
+        
+        # Generiamo un messaggio riassuntivo che mostra il numero di errori
+        fmsg = f"Parsing fallito: trovati {len(errors)} errori."
+        super().__init__(fmsg)
 
 class Parser:
 
@@ -77,7 +85,7 @@ class Parser:
         if len(error_list) > 0:
             for e in error_list:
                 print(e)
-            raise ParsingException(msg="Invalid map data!")
+            raise MultipleParsingExceptions(error_list)
         try:
             map_data = MapData(name=g_name, nb_drones=nb_drones,
                                hubs=hub_list, connections=conn_list)
@@ -184,21 +192,32 @@ class Parser:
                     int(value)
                 except ValueError:
                     raise ParsingException(msg="invalid max_drones in metadata")
+                meta_dict[key] = int(value)
         try:
             data = MetaData(tag=tag.value,
                             z_type=meta_dict.get('zone'),
-                            color=meta_dict.get('color'),
+                            color=meta_dict.get('color', ParsingColors.WHITE),
                             max_drones=meta_dict.get('max_drones'),
                             max_link_capacity=meta_dict.get('max_link_capacity'))
         except ValidationError as e:
-            raise ParsingException(f"invalid metadata for type {tag}")
+            raise ParsingException(msg=e.errors()[0]['msg'])
         return data
 
 
 if __name__ == "__main__":
+    g: Graph
     try:
-        g: Graph = Parser.parse_map("maps/easy/02_simple_fork.txt")
+        # easy
+        #g = Parser.parse_map("maps/easy/01_linear_path.txt")
+        #g = Parser.parse_map("maps/easy/02_simple_fork.txt")
+        #g = Parser.parse_map("maps/easy/03_basic_capacity.txt")
+
+        # hard
+        #g = Parser.parse_map("maps/hard/01_maze_nightmare.txt")
+        g = Parser.parse_map("maps/hard/03_ultimate_challenge.txt")
+        
+
         print(g.printGraph())
-    except (ParsingException, OSError) as e:
-        print(e.msg)
+    except (MultipleParsingExceptions, OSError, ValidationError) as e:
+        print(e)
     

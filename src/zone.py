@@ -1,4 +1,4 @@
-from utils import ParsingZones
+from utils import ParsingZones, ParsingColors
 from validation_models import HubData
 from typing import Final
 
@@ -34,7 +34,7 @@ class Zone:
     def get_type(self) -> ParsingZones:
         return self.__type
 
-    def get_color(self) -> str:
+    def get_color(self) -> ParsingColors:
         return self.__color
 
     def increment_drones(self) -> None:

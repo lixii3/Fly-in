@@ -45,7 +45,7 @@ class Graph:
             lines.append(
                 f"  - {zone.get_name()}: x={zone.get_x()}, y={zone.get_y()}, "
                 f"type={zone.get_type().name}, cost={zone.get_cost()}, "
-                f"color={zone.get_color()}, max_drones={zone.MAX_DRONES}"
+                f"color={zone.get_color().name}, max_drones={zone.MAX_DRONES}"
             )
 
         lines.append("Connections:")
@@ -58,6 +58,3 @@ class Graph:
 
         return "\n".join(lines)
 
-
-if __name__ == "__main__":
-   pass

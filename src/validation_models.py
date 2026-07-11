@@ -1,5 +1,5 @@
 from utils import ParsingTags, ParsingColors, ParsingZones
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 from typing import List
 
@@ -45,8 +45,8 @@ class MetaData(BaseModel):
 class HubData(BaseModel):
     tag: ParsingTags
     name: str = Field(min_length=1)
-    x: int = Field(ge=0)
-    y: int = Field(ge=0)
+    x: int = -1
+    y: int = -1
     metadata: MetaData | None = None
 
     @model_validator(mode="after")

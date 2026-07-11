@@ -7,13 +7,9 @@ class ParsingTags(Enum):
     HUB = "hub"
     CONNECTION = "connection"
 
-    def getTag(tag: str):
-        match tag:
-            case 'start_hub': return ParsingTags.START_HUB
-            case 'end_hub': return ParsingTags.END_HUB
-            case 'hub': return ParsingTags.HUB
-            case 'connection': return ParsingTags.CONNECTION
-            case _: return None
+    @classmethod
+    def getTag(cls, tag: str):
+        return cls.__members__.get(tag.upper())
 
 class ParsingZones(Enum):
     NORMAL = 1
@@ -21,28 +17,25 @@ class ParsingZones(Enum):
     PRIORITY = 0.9999
     BLOCKED = 99999999999999
 
-    def getZone(zone: str):
-        match zone:
-            case 'normal': return ParsingZones.NORMAL
-            case 'restricted': return ParsingZones.RESTRICTED
-            case 'priority': return ParsingZones.PRIORITY
-            case 'blocked': return ParsingZones.BLOCKED
-            case _: return None
+    @classmethod
+    def getZone(cls, zone: str):
+        return cls.__members__.get(zone.upper())
 
 class ParsingColors(Enum):
     RED = "#FF0000"
-    GREEN = "#00FF00"
+    MAGENTA = "#FF00FF"
+    GREEN = "#008000"
+    LIME = "#00FF00"
     BLUE = "#0000FF"
+    CYAN = "#00B7FF"
+    PURPLE = "#2E2BFA"
     YELLOW = "#FFFF00"
+    GOLD = "#FFD700"
+    ORANGE = "#FFA500"
+    BROWN = "#A52A2A"
     WHITE = "#FFFFFF"
     PINK = "#E994D7"
 
-    def getColor(color: str):
-        match color:
-            case 'red': return ParsingColors.RED
-            case 'green': return ParsingColors.GREEN
-            case 'blue': return ParsingColors.BLUE
-            case 'yellow': return ParsingColors.YELLOW
-            case 'pink': return ParsingColors.PINK
-            case 'white': return ParsingColors.WHITE
-            case _: return None
+    @classmethod
+    def getColor(cls, color: str):
+        return cls.__members__.get(color.upper())
