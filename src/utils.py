@@ -38,4 +38,4 @@ class ParsingColors(Enum):
 
     @classmethod
     def getColor(cls, color: str):
-        return cls.__members__.get(color.upper())
+        return cls.__members__.get(color.upper(), ParsingColors.WHITE)

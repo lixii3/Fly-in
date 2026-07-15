@@ -8,7 +8,12 @@ from pydantic import ValidationError
 
 class ConnectionException(Exception):
     def __init__(self, msg: str):
+        self.msg = msg
         super().__init__(msg)
+
+    def __str__(self):
+          return self.msg
+    
 
 class Connection:
     def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
@@ -21,7 +26,7 @@ class Connection:
             if z.get_name() == data.zoneA or z.get_name() == data.zoneB:
                 self.__arch.add(z)
         if len(self.__arch) != 2:
-            raise ConnectionException("Invalid zone list parameter")
+            raise ConnectionException(f"Expecting zones ('{data.zoneA}', {data.zoneB}') to exist within the map.")
 
     @classmethod
     def manual_connection(cls, name: str, zoneA: Zone, zoneB: Zone,
@@ -38,7 +43,7 @@ class Connection:
     def get_name(self) -> str:
             return self.__name
 
-    def get_color(self) -> str:
+    def get_color(self) -> ParsingColors:
             return self.__color
 
     def get_arch(self) -> set[Zone]:

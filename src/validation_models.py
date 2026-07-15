@@ -11,6 +11,7 @@ class MetaData(BaseModel):
     color: ParsingColors = ParsingColors.WHITE
     max_drones: int | None = Field(ge=0, default=None)
     max_link_capacity: int | None = Field(ge=0, default=None)
+    nb_drones: int = 0
 
     @model_validator(mode="after")
     def validator(self) -> Self:
@@ -21,14 +22,13 @@ class MetaData(BaseModel):
                              "'max_link_capacity' field to be None")
         if (self.tag == ParsingTags.START_HUB or
             self.tag == ParsingTags.END_HUB):
-            # ignoro max_drones
-            if self.max_drones:
-                self.max_drones = None
+            if (self.max_drones and self.max_drones < self.nb_drones) or self.max_drones == 0:
+                raise ValueError("Max drone capacity is forbidden for hub of typ estart/end")
             # start e end devono essere normal
             if self.z_type is None:
                 self.z_type = ParsingZones.NORMAL
             elif self.z_type != ParsingZones.NORMAL:
-                raise ValueError("Start / end hub can't have a "
+                raise ValueError("Start / end "
                                 "must be normal zones")
 
         if self.tag == ParsingTags.CONNECTION and\
@@ -58,7 +58,12 @@ class HubData(BaseModel):
         elif ' ' in self.name or '-' in self.name:
             raise ValueError("Hub name can't contain spaces or dashes")
         if not self.metadata:
-            self.metadata = MetaData(tag=self.tag, z_type=ParsingZones.NORMAL, max_drones=1)
+            max_d: int | None
+            if self.tag != ParsingTags.START_HUB and self.tag != ParsingTags.END_HUB:
+                max_d = 1
+            else:
+                max_d = None
+            self.metadata = MetaData(tag=self.tag, z_type=ParsingZones.NORMAL, max_drones=max_d)
         # se contiene metadata di tipo connection
         elif self.metadata and self.metadata.tag == ParsingTags.CONNECTION:
             raise ValueError(f"Invalid metadata for hub: '{self.name}'")
@@ -88,7 +93,7 @@ class ConnectionData(BaseModel):
         self.zoneB = self.name.split('-')[1]
         if not self.zoneA or not self.zoneB or\
             (self.zoneA == self.zoneB):
-            raise ValueError('Invalid connection name')
+            raise ValueError('Invalid self connection')
         return self
 
 

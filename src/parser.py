@@ -1,18 +1,19 @@
-from graph import Graph
+from graph import Graph, GraphException
 from utils import ParsingColors, ParsingTags, ParsingZones
 from validation_models import MetaData, ConnectionData, HubData, MapData
 from typing import List, Dict
 from pydantic import ValidationError
-from typing_extensions import Self
 
 
 class ParsingException(Exception):
-    def __init__(self, map_name: str = '', line: int = 0,
+    def __init__(self, map_name: str = '', line: int = -1,
                  msg: str | None = None):
         self.msg = msg
         self.map = map_name
         self.line = line
         self.fmsg = f"Error on line {line} in map '{map_name}': {msg}"
+        if line == -1:
+            self.fmsg = f"Error in map '{map_name}': {msg}"
         super().__init__(self.fmsg, map_name, line)
 
     def __str__(self):
@@ -21,10 +22,15 @@ class ParsingException(Exception):
 class MultipleParsingExceptions(Exception):
     def __init__(self, errors: list[ParsingException]):
         self.errors = errors
-        
         # Generiamo un messaggio riassuntivo che mostra il numero di errori
-        fmsg = f"Parsing fallito: trovati {len(errors)} errori."
-        super().__init__(fmsg)
+        self.msg = f"Parsing fallito: trovati {len(errors)} errori."
+        super().__init__(self.msg)
+
+    def __str__(self):
+        output: str = ""
+        for e in self.errors:
+            output += str(e) + '\n'
+        return output
 
 class Parser:
 
@@ -33,7 +39,7 @@ class Parser:
         error_list: List[ParsingException] = []
         graph: Graph
         g_name: str = map.rsplit("/", 1)[-1].split('.')[0]
-        nb_drones: int
+        nb_drones: int = -1
         hub_list: List[HubData] = []
         conn_list: List[ConnectionData] = []
         map_data: MapData
@@ -61,14 +67,14 @@ class Parser:
                         nb_line += 1
                         continue
                     # se la prima riga che incontro non e' nb_drones
-                    elif row and row_count >= 1 and not nb_drones:
+                    elif row and row_count >= 1 and nb_drones == -1:
                         error_list.append(ParsingException(g_name,
                                                            nb_line,
                                                            "first line must be 'nb_drones'"))
                         nb_line += 1
                         continue
                     try:
-                        data = Parser._parse_zone(row)
+                        data = Parser._parse_zone(row, nb_drones)
                         if isinstance(data, HubData):
                             hub_list.append(data)
                         else:
@@ -83,15 +89,16 @@ class Parser:
 
         # stampa errori e raise finale
         if len(error_list) > 0:
-            for e in error_list:
-                print(e)
             raise MultipleParsingExceptions(error_list)
         try:
             map_data = MapData(name=g_name, nb_drones=nb_drones,
                                hubs=hub_list, connections=conn_list)
         except ValidationError as e:
-            raise e
-        graph = Graph(map_data)
+            raise ParsingException(map_name=g_name, msg=e.errors()[0].get('msg',  "no message"))
+        try:
+            graph = Graph(map_data)
+        except GraphException as e:
+            raise ParsingException(map_name=g_name, msg=str(e))
         return graph
 
     @staticmethod
@@ -107,7 +114,7 @@ class Parser:
         return int(nb_drones)
 
     @staticmethod
-    def _parse_zone(row: str) -> ConnectionData | HubData:
+    def _parse_zone(row: str, nb_drones: int) -> ConnectionData | HubData:
         line: str = row.split('[')[0]
         data: ConnectionData | HubData
         tag: ParsingTags
@@ -125,7 +132,7 @@ class Parser:
             raise ParsingException(msg="Invalid tag")
 
         line = line.split(':')[1]
-        args = line.strip().split(' ')
+        args = line.strip().split()
 
         # se e' una hub trovo x e y
         if tag != ParsingTags.CONNECTION and len(args) == 3:
@@ -134,22 +141,22 @@ class Parser:
                 x = int(args[1])
                 y = int(args[2])
             except ValueError as e:
-                raise ParsingException(msg=e.args[0])
+                raise ParsingException(msg="Invalid non integers coordinates")
         elif tag == ParsingTags.CONNECTION and len(args) == 1:
             name = args[0]
         else:
-            raise ParsingException(msg=f"Parser 133: Invalid line format for data of type {tag.value}")
+            raise ParsingException(msg=f"Invalid line format for data of type {tag.value}")
 
         if len(row.split('[')) == 2:
             meta_line = row.split('[')[1]
             if meta_line.count("]") == 1 and meta_line.strip().endswith(']'):
                 meta_line = meta_line.split("]")[0]
                 try:
-                    metadata = Parser._parse_metadata(meta_line, tag)
+                    metadata = Parser._parse_metadata(meta_line, tag, nb_drones)
                 except ParsingException as e:
                     raise e
             else:
-                raise ParsingException(msg='Parser 121: Invalid metadata')
+                raise ParsingException(msg='Invalid metadata format')
 
         try:
             if tag != ParsingTags.CONNECTION:
@@ -163,61 +170,46 @@ class Parser:
         return data
 
     @staticmethod
-    def _parse_metadata(row: str, tag: ParsingTags) -> MetaData:
+    def _parse_metadata(row: str, tag: ParsingTags, nb_drones: int) -> MetaData:
         data: MetaData
         _tags: tuple = ('color', 'zone', 'max_drones', 'max_link_capacity')
         meta_dict: Dict[str, str] = {}
-        metadata: List[str] = row.split(' ')
+        metadata: List[str] = row.split()
         key: str
         value: str
+
+        if len(metadata) == 0:
+            raise ParsingException(msg="Invalid empty metadata")
 
         for i in range(len(metadata)):
             tmp = metadata[i].strip()
             if tmp.count('=') != 1 or tmp.startswith('=') or\
                 tmp.endswith('=') or ' ' in tmp:
-                raise ParsingException(msg="invalid metadata")
+                raise ParsingException(msg="Invalid metadata")
             key, value = tmp.split('=')
             if key not in _tags or key in meta_dict:
-                raise ParsingException(msg="invalid metadata")
+                raise ParsingException(msg="Invalid metadata")
             if key == 'zone':
                 meta_dict[key] = ParsingZones.getZone(value)
                 if meta_dict[key] is None:
-                    raise ParsingException(msg="invalid zone value in metadata")
+                    raise ParsingException(msg="Invalid zone value in metadata")
             elif key == 'color':
                 meta_dict[key] = ParsingColors.getColor(value)
                 if meta_dict[key] is None:
-                    raise ParsingException(msg="invalid color value metadata")
+                    raise ParsingException(msg="Invalid color value metadata")
             elif key == 'max_drones' or key == 'max_link_capacity':
                 try:
                     int(value)
                 except ValueError:
-                    raise ParsingException(msg="invalid max_drones in metadata")
+                    raise ParsingException(msg="Invalid max_drones in metadata")
                 meta_dict[key] = int(value)
         try:
             data = MetaData(tag=tag.value,
                             z_type=meta_dict.get('zone'),
                             color=meta_dict.get('color', ParsingColors.WHITE),
-                            max_drones=meta_dict.get('max_drones'),
-                            max_link_capacity=meta_dict.get('max_link_capacity'))
+                            max_drones=meta_dict.get('max_drones', None),
+                            max_link_capacity=meta_dict.get('max_link_capacity'),
+                            nb_drones=nb_drones)
         except ValidationError as e:
             raise ParsingException(msg=e.errors()[0]['msg'])
         return data
-
-
-if __name__ == "__main__":
-    g: Graph
-    try:
-        # easy
-        #g = Parser.parse_map("maps/easy/01_linear_path.txt")
-        #g = Parser.parse_map("maps/easy/02_simple_fork.txt")
-        #g = Parser.parse_map("maps/easy/03_basic_capacity.txt")
-
-        # hard
-        #g = Parser.parse_map("maps/hard/01_maze_nightmare.txt")
-        g = Parser.parse_map("maps/hard/03_ultimate_challenge.txt")
-        
-
-        print(g.printGraph())
-    except (MultipleParsingExceptions, OSError, ValidationError) as e:
-        print(e)
-    

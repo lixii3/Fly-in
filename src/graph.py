@@ -1,12 +1,16 @@
 from zone import Zone
-from connection import Connection
+from connection import Connection, ConnectionException
 from typing import List
 from validation_models import MapData
 
 
 class GraphException(Exception):
-    def __init__(self, msg: str):
+    def __init__(self, msg: str = ""):
+        self.msg = msg
         super().__init__(msg)
+
+    def __str__(self):
+        return self.msg
 
 
 class Graph:
@@ -19,7 +23,10 @@ class Graph:
         for h in data.hubs:
             self.__zones.append(Zone(h))
         for c in data.connections:
-            self.__connections.append(Connection(c, self.__zones))
+            try:
+                self.__connections.append(Connection(c, self.__zones))
+            except ConnectionException as e:
+                raise GraphException(str(e))
 
     ##### GETTERS #######
     def get_name(self) -> str:
@@ -53,7 +60,7 @@ class Graph:
             zone_names = sorted([z.get_name() for z in connection.get_arch()])
             lines.append(
                 f"  - {connection.get_name()}: {zone_names[0]} <-> {zone_names[1]}, "
-                f"color={connection.get_color()}, max_link_capacity={connection.MAX_LINK_CAPACITY}"
+                f"color={connection.get_color().name}, max_link_capacity={connection.MAX_LINK_CAPACITY}"
             )
 
         return "\n".join(lines)
