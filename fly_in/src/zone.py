@@ -1,5 +1,5 @@
-from utils import ParsingZones, ParsingColors
-from validation_models import HubData
+from fly_in.src.utils import ParsingZones, ParsingColors
+from fly_in.src.validation_models import HubData
 from typing import Final
 
 # class ZoneException(Exception):

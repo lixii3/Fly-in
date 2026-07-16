@@ -1,7 +1,7 @@
 from __future__ import annotations
-from zone import Zone
-from validation_models import ConnectionData, MetaData
-from validation_models import ParsingColors, ParsingTags
+from fly_in.src.zone import Zone
+from fly_in.src.validation_models import ConnectionData, MetaData
+from fly_in.src.validation_models import ParsingColors, ParsingTags
 from typing import Final, Iterable
 from pydantic import ValidationError
 

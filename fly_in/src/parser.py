@@ -1,6 +1,6 @@
-from graph import Graph, GraphException
-from utils import ParsingColors, ParsingTags, ParsingZones
-from validation_models import MetaData, ConnectionData, HubData, MapData
+from fly_in.src.graph import Graph, GraphException
+from fly_in.src.utils import ParsingColors, ParsingTags, ParsingZones
+from fly_in.src.validation_models import MetaData, ConnectionData, HubData, MapData
 from typing import List, Dict
 from pydantic import ValidationError
 

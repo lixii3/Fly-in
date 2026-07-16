@@ -1,7 +1,7 @@
-from zone import Zone
-from connection import Connection, ConnectionException
+from fly_in.src.zone import Zone
+from fly_in.src.connection import Connection, ConnectionException
 from typing import List
-from validation_models import MapData
+from fly_in.src.validation_models import MapData
 
 
 class GraphException(Exception):

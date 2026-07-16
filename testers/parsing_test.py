@@ -1,5 +1,4 @@
-from parser import Parser, MultipleParsingExceptions, ParsingException
-from graph import Graph
+from fly_in.src.parser import Parser, MultipleParsingExceptions, ParsingException
 import os
 
 def test_cases(dir_path: str, verbose: bool = False):
@@ -30,6 +29,6 @@ def test_cases(dir_path: str, verbose: bool = False):
 
 if __name__ == "__main__":
     try:
-        test_cases("maps/test/files", verbose=True)
+        test_cases("fly_in/maps/test/files", verbose=True)
     except (OSError, MultipleParsingExceptions) as e:
         print(e)

@@ -1,32 +1,16 @@
-# TODO: RIFAI TUTTO
-
-[build-system]
-requires = [
-    "setuptools>=65.0",
-    "wheel",
-    "setuptools-scm[toml]>=8.0",
-]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "fly_in"
-description = ""
-readme = "README.md"
-requires-python = ">=3.10"
-author = 'lmongili'
 version = "0.1.0"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Operating System :: OS Independent",
+description = "Managing drones crossing a graph in the smallest amount of turns possible"
+authors = [
+    {name = "lmongili"}
 ]
+requires-python = ">=3.10"
 dependencies = [
-    pydantic
+    "pydantic (>=2.13.4,<3.0.0)"
 ]
 
-[project.scripts]
-mazegen = ""
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = [""]
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

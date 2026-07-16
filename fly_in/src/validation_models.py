@@ -1,4 +1,4 @@
-from utils import ParsingTags, ParsingColors, ParsingZones
+from fly_in.src.utils import ParsingTags, ParsingColors, ParsingZones
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 from typing import List
