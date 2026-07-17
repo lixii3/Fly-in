@@ -1,15 +1,18 @@
-[project]
+[tool.poetry]
 name = "fly_in"
 version = "0.1.0"
 description = "Managing drones crossing a graph in the smallest amount of turns possible"
-authors = [
-    {name = "lmongili"}
-]
-requires-python = ">=3.10"
-dependencies = [
-    "pydantic (>=2.13.4,<3.0.0)"
-]
+authors = ["lmongili"]
 
+packages = [{ include = "fly_in" }]
+
+[tool.poetry.dependencies]
+python = ">=3.10"
+pydantic = ">=2.13.4,<3.0.0"
+
+[tool.poetry.group.dev.dependencies]
+flake8 = "*"
+mypy = "*"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

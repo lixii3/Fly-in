@@ -12,8 +12,8 @@ class ConnectionException(Exception):
         super().__init__(msg)
 
     def __str__(self):
-          return self.msg
-    
+        return self.msg
+
 
 class Connection:
     def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
@@ -26,26 +26,30 @@ class Connection:
             if z.get_name() == data.zoneA or z.get_name() == data.zoneB:
                 self.__arch.add(z)
         if len(self.__arch) != 2:
-            raise ConnectionException(f"Expecting zones ('{data.zoneA}', {data.zoneB}') to exist within the map.")
+            raise ConnectionException(
+                f"Expecting zones ('{data.zoneA}', {data.zoneB}') to exist within the map."
+            )
 
     @classmethod
-    def manual_connection(cls, name: str, zoneA: Zone, zoneB: Zone,
-                 color: str, max_link_capacity: int = 1) -> Connection:
+    def manual_connection(
+        cls, name: str, zoneA: Zone, zoneB: Zone, color: str, max_link_capacity: int = 1
+    ) -> Connection:
         try:
-            metadata: MetaData = MetaData(tag=ParsingTags.CONNECTION,
-                                          color=ParsingColors.getColor(color),
-                                          max_link_capacity=max_link_capacity)
+            metadata: MetaData = MetaData(
+                tag=ParsingTags.CONNECTION,
+                color=ParsingColors.getColor(color),
+                max_link_capacity=max_link_capacity,
+            )
             data: ConnectionData = ConnectionData(name=name, metadata=metadata)
         except ValidationError as e:
-             raise e
+            raise e
         return cls(data, [zoneA, zoneB])
 
     def get_name(self) -> str:
-            return self.__name
+        return self.__name
 
     def get_color(self) -> ParsingColors:
-            return self.__color
+        return self.__color
 
     def get_arch(self) -> set[Zone]:
-         return self.__arch
-
+        return self.__arch
