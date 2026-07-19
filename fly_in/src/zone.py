@@ -1,22 +1,31 @@
-from fly_in.src.utils import ParsingZones, ParsingColors
+from __future__ import annotations
+from fly_in.src.utils import ParsingZoneType, ParsingColors
+from typing import Final, TYPE_CHECKING
 from fly_in.src.validation_models import HubData
-from typing import Final
 
-# class ZoneException(Exception):
-#     def __init__(self, msg: str):
-#         super().__init__(msg)
+
+if TYPE_CHECKING:
+    from fly_in.src.drone import Drone
+
+class ZoneException(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+        super().__init__(msg)
+    
+    def __str__(self):
+        return self.msg
 
 
 class Zone:
     def __init__(self, data: HubData) -> None:
-        self.__drones_in = 0
+        self.__drones_in: list[Drone] = []
         self.__name = data.name
         self.__x = data.x
         self.__y = data.y
         self.__type = data.metadata.z_type
         self.__cost = self.__type.value
         self.__color = data.metadata.color
-        self.MAX_DRONES: Final[int]= data.metadata.max_drones
+        self.MAX_DRONES: Final[int | None] = data.metadata.max_drones
 
     ##### GETTERS #######
     def get_name(self) -> str:
@@ -31,14 +40,28 @@ class Zone:
     def get_cost(self) -> int:
         return self.__cost
     
-    def get_type(self) -> ParsingZones:
+    def get_type(self) -> ParsingZoneType:
         return self.__type
 
     def get_color(self) -> ParsingColors:
         return self.__color
 
-    def increment_drones(self) -> None:
-        self.__drones_in += 1
+    def drone_in(self, drone: Drone) -> None:
+        if not self.space_left():
+            raise ZoneException("Error: zone capacity is full, "
+                                      f"unable to insert drone '{drone.ID}'")
+        self.__drones_in.append(drone)
+        drone.set_where(self)
 
-    def decrement_drones(self) -> None:
-        self.__drones_in -= 1
+    def drone_out(self, drone: Drone) -> None:
+        try:
+            self.__drones_in.remove(drone)
+        except ValueError:
+            raise ZoneException(f"Error: drone '{drone.ID}' is not present in"
+                                f"zone '{self.__name}', unable to get it out")
+        drone.set_where(None)
+
+    def space_left(self) -> int:
+        if self.MAX_DRONES:
+            return self.MAX_DRONES - len(self.__drones_in)
+        return -1

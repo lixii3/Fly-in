@@ -1,5 +1,5 @@
 from fly_in.src.graph import Graph, GraphException
-from fly_in.src.utils import ParsingColors, ParsingTags, ParsingZones
+from fly_in.src.utils import ParsingColors, ParsingTags, ParsingZoneType
 from fly_in.src.validation_models import MetaData, ConnectionData, HubData, MapData
 from typing import List, Dict
 from pydantic import ValidationError
@@ -196,7 +196,7 @@ class Parser:
             if key not in _tags or key in meta_dict:
                 raise ParsingException(msg="Invalid metadata")
             if key == "zone":
-                meta_dict[key] = ParsingZones.getZone(value)
+                meta_dict[key] = ParsingZoneType.getZone(value)
                 if meta_dict[key] is None:
                     raise ParsingException(msg="Invalid zone value in metadata")
             elif key == "color":

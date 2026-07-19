@@ -11,7 +11,7 @@ class ParsingTags(Enum):
     def getTag(cls, tag: str):
         return cls.__members__.get(tag.upper())
 
-class ParsingZones(Enum):
+class ParsingZoneType(Enum):
     NORMAL = 1
     RESTRICTED = 2
     PRIORITY = 0.9999

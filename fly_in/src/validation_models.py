@@ -1,4 +1,4 @@
-from fly_in.src.utils import ParsingTags, ParsingColors, ParsingZones
+from fly_in.src.utils import ParsingTags, ParsingColors, ParsingZoneType
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 from typing import List
@@ -7,7 +7,7 @@ from typing import List
 class MetaData(BaseModel):
 
     tag: ParsingTags
-    z_type: ParsingZones | None = None
+    z_type: ParsingZoneType | None = None
     color: ParsingColors = ParsingColors.WHITE
     max_drones: int | None = Field(ge=0, default=None)
     max_link_capacity: int | None = Field(ge=0, default=None)
@@ -26,8 +26,8 @@ class MetaData(BaseModel):
                 raise ValueError("Max drone capacity is forbidden for hub of typ estart/end")
             # start e end devono essere normal
             if self.z_type is None:
-                self.z_type = ParsingZones.NORMAL
-            elif self.z_type != ParsingZones.NORMAL:
+                self.z_type = ParsingZoneType.NORMAL
+            elif self.z_type != ParsingZoneType.NORMAL:
                 raise ValueError("Start / end "
                                 "must be normal zones")
 
@@ -35,10 +35,10 @@ class MetaData(BaseModel):
                 (self.z_type or self.max_drones):
             raise ValueError("'connection' type_data expects "
                              "fields 'max_drones' and 'zone' to be None")
-        if self.z_type == ParsingZones.BLOCKED:
+        if self.z_type == ParsingZoneType.BLOCKED:
             self.max_drones = 0
         elif self.z_type == None and self.tag != ParsingTags.CONNECTION:
-            self.z_type = ParsingZones.NORMAL
+            self.z_type = ParsingZoneType.NORMAL
         return self
 
 
@@ -63,7 +63,7 @@ class HubData(BaseModel):
                 max_d = 1
             else:
                 max_d = None
-            self.metadata = MetaData(tag=self.tag, z_type=ParsingZones.NORMAL, max_drones=max_d)
+            self.metadata = MetaData(tag=self.tag, z_type=ParsingZoneType.NORMAL, max_drones=max_d)
         # se contiene metadata di tipo connection
         elif self.metadata and self.metadata.tag == ParsingTags.CONNECTION:
             raise ValueError(f"Invalid metadata for hub: '{self.name}'")
