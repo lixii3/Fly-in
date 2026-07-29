@@ -36,6 +36,9 @@ class Zone:
 
     def get_color(self) -> ParsingColors:
         return self.__color
+    
+    def get_coordinates(self) -> tuple[int, int]:
+        return (self.__x, self.__y)
 
     def increment_drones(self) -> None:
         self.__drones_in += 1

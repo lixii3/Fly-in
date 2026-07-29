@@ -53,3 +53,9 @@ class Connection:
 
     def get_arch(self) -> set[Zone]:
         return self.__arch
+    
+    def get_A(self) -> Zone:
+        return self.__arch[0]
+
+    def get_B(self) -> Zone:
+        return self.__arch[1]
