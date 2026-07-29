@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fly_in.src.validation_models import ParsingColors, ParsingTags
 from fly_in.src.validation_models import ConnectionData, MetaData
-from typing import Final, Iterable, TYPE_CHECKING
+from typing import Final, Iterable, TYPE_CHECKING, overload
 from pydantic import ValidationError
 
 
@@ -18,25 +18,9 @@ class ConnectionException(Exception):
 
 
 class Connection:
-    def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
-        self.__name: Final[str] = data.name
-        self.__arch: set[Zone, Zone] = set()
-        self.__color = data.metadata.color
-        self.MAX_LINK_CAPACITY: Final[int] = data.metadata.max_link_capacity
-        self.__drones_in: list[Drone]
-
-        for z in zones:
-            if z.get_name() == data.zoneA or z.get_name() == data.zoneB:
-                self.__arch.add(z)
-        if len(self.__arch) != 2:
-            raise ConnectionException(
-                f"Expecting zones ('{data.zoneA}', {data.zoneB}') to exist within the map."
-            )
-
-    @classmethod
-    def manual_connection(
-        cls, name: str, zoneA: Zone, zoneB: Zone, color: str, max_link_capacity: int = 1
-    ) -> Connection:
+    @overload
+    def __init__(self, name: str, zoneA: Zone, zoneB: Zone,
+                 color: str, max_link_capacity: int = 1) -> None:
         try:
             metadata: MetaData = MetaData(
                 tag=ParsingTags.CONNECTION,
@@ -46,7 +30,24 @@ class Connection:
             data: ConnectionData = ConnectionData(name=name, metadata=metadata)
         except ValidationError as e:
             raise e
-        return cls(data, [zoneA, zoneB])
+        self.__init__(data, [zoneA, zoneB])
+
+    def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
+        self.__name: Final[str] = data.name
+        self.__arch: tuple[Zone, Zone] = ()
+        self.__color = data.metadata.color
+        self.MAX_LINK_CAPACITY: Final[int] = data.metadata.max_link_capacity
+        self.__drones_in: list[Drone]
+
+        __tmparch: list[Zone] = []
+        for z in zones:
+            if z.get_name() == data.zoneA or z.get_name() == data.zoneB:
+                __tmparch.append(z)
+        if len(__tmparch) != 2:
+            raise ConnectionException(
+                f"Expecting zones ('{data.zoneA}', {data.zoneB}') to exist within the map."
+            )
+        self.__arch = tuple(__tmparch)
 
     # GETTERS
     def get_name(self) -> str:

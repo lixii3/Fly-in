@@ -1,5 +1,5 @@
 # TODO: RIFAI TUTTO
-NAME = main.py
+NAME = fly_in/main.py
 PYTHON = python3
 VENV = .venv
 BIN = $(VENV)/bin

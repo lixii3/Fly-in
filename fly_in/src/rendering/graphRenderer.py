@@ -1,22 +1,20 @@
 import pygame as pg
-from connection import Connection
-from zone import Zone
-from graph import Graph
 from typing import Callable
-from utils import calcola_trasformazione
+from fly_in.src.connection import Connection
+from fly_in.src.zone import Zone
+from fly_in.src.graph import Graph
+from fly_in.src.rendering.utils import calcola_trasformazione
 
 
 class GraphRenderer:
     def __init__(self, screen: pg.Surface):
         self.screen: pg.Surface = screen
-        self.screen.se
         self.font = pg.font.SysFont('Arial', 18)
-        
-    
         
     def drawConnection(self, conn: Connection,
                        normalizer_funct: Callable | None=None) -> None:
-        color = pg.Color(conn.get_color().value)
+        color = pg.Color("#000000")
+        color.a = 255
         xa, ya = conn.get_zoneA().get_coordinates()
         xb, yb = conn.get_zoneB().get_coordinates()
         start = (xa, ya)
@@ -27,21 +25,25 @@ class GraphRenderer:
         pg.draw.line(self.screen, color, start, end, 2)
         
     def drawZone(self, zone: Zone,
-                 radius: int=5,
-                 normalizer_funct: Callable | None=None) -> None:
+                 normalizer_funct: Callable | None=None,
+                 radius: int=30) -> None:
         color = zone.get_color().value
         x, y = zone.get_coordinates()
         center = (x,y)
         if normalizer_funct:
             center = normalizer_funct(x, y)
-        pg.draw.circle(self.screen, color, center, radius, 1)
+        pg.draw.circle(self.screen, color, center, radius)
         
-    def drawGraph(self, graph: Graph) -> None:
+    def drawGraph(self, graph: Graph) -> Callable:
+        self.screen.fill("#FFFFFF")
         to_screen: Callable = calcola_trasformazione(graph.get_zones(),
                                                   self.screen.get_width(),
                                                   self.screen.get_height())
         for c in graph.get_connections():
             self.drawConnection(c, to_screen)
         for z in graph.get_zones():
-            self.drawConnection(z, to_screen)
+            self.drawZone(z, to_screen)
+        
+        #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
+        return to_screen
         

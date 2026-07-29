@@ -9,7 +9,7 @@ if TYPE_CHECKING:
 class Drone:
     __counter = 0
     def __init__(self) -> None:
-        self.ID: Final[str] = f"DR-0{str(self.__counter).zfill(4)}"
+        self.ID: Final[str] = f"DR-{str(self.__counter).zfill(4)}"
         self.__where: Zone | Connection = None
         self.__counter += 1
 

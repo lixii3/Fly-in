@@ -28,7 +28,8 @@ def test_cases(dir_path: str, verbose: bool = False):
 
 
 if __name__ == "__main__":
+    dir_path = "fly_in/maps/test/files"
     try:
-        test_cases("fly_in/maps/test/files", verbose=True)
+        test_cases(dir_path, verbose=True)
     except (OSError, MultipleParsingExceptions) as e:
         print(e)

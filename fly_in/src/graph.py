@@ -4,6 +4,8 @@ from fly_in.src.utils import ParsingTags
 from typing import List
 from fly_in.src.connection import Connection, ConnectionException
 from fly_in.src.zone import Zone
+from fly_in.src.drone import Drone
+
 
 class GraphException(Exception):
     def __init__(self, msg: str = ""):
@@ -20,6 +22,7 @@ class Graph:
         self.__nb_drones = data.nb_drones
         self.__zones: List[Zone] = []
         self.__connections: List[Connection] = []
+        self.__drones: List[Drone] = []
 
         for h in data.hubs:
             if h.tag == ParsingTags.START_HUB:
@@ -51,6 +54,12 @@ class Graph:
 
     def get_connections(self) -> List[Connection]:
         return self.__connections
+    
+    def add_drone(self, drone: Drone) -> None:
+        if drone in self.__drones:
+            raise GraphException(f"Drone '{drone.ID}' already in graph '{self.__name}'")
+        drone.set_where(self.get_start())
+        self.__drones.append(drone)
     
     def remove_connection(self, conn: Connection) -> None:
         try:
