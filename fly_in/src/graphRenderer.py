@@ -17,8 +17,8 @@ class GraphRenderer:
     def drawConnection(self, conn: Connection,
                        normalizer_funct: Callable | None=None) -> None:
         color = pg.Color(conn.get_color().value)
-        xa, ya = conn.get_A().get_coordinates()
-        xb, yb = conn.get_B().get_coordinates()
+        xa, ya = conn.get_zoneA().get_coordinates()
+        xb, yb = conn.get_zoneB().get_coordinates()
         start = (xa, ya)
         end = (xb, yb)
         if normalizer_funct:

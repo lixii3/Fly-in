@@ -1,8 +1,9 @@
-from fly_in.src.zone import Zone
-from fly_in.src.connection import Connection, ConnectionException
-from typing import List
+from __future__ import annotations
 from fly_in.src.validation_models import MapData
-
+from fly_in.src.utils import ParsingTags
+from typing import List
+from fly_in.src.connection import Connection, ConnectionException
+from fly_in.src.zone import Zone
 
 class GraphException(Exception):
     def __init__(self, msg: str = ""):
@@ -21,6 +22,10 @@ class Graph:
         self.__connections: List[Connection] = []
 
         for h in data.hubs:
+            if h.tag == ParsingTags.START_HUB:
+                self.__start = h
+            elif h.tag == ParsingTags.END_HUB:
+                self.__end = h
             self.__zones.append(Zone(h))
         for c in data.connections:
             try:
@@ -35,13 +40,39 @@ class Graph:
     def get_nb_drones(self) -> int:
         return self.__nb_drones
 
-    def get_zones(self) -> List[Zone]:
+    def get_zones(self) -> List['Zone']:
         return self.__zones
+    
+    def get_start(self) -> Zone:
+        return self.__start
+    
+    def get_end(self) -> Zone:
+        return self.__end
 
     def get_connections(self) -> List[Connection]:
         return self.__connections
     
-    def printGraph(self) -> str:
+    def remove_connection(self, conn: Connection) -> None:
+        try:
+            self.__connections.remove(conn)
+        except ValueError:
+            GraphException(f"Error: unexistant '{conn.get_name()}' connection"
+                           f"in graph '{self.__name}'")
+
+    def remove_zone(self, zone: Connection) -> None:
+        try:
+            self.__zones.remove(zone)
+        except ValueError:
+            GraphException(f"Error: unexistant '{zone.get_name()}' zone"
+                           f"in graph '{self.__name}'")
+        for c in self.__connections:
+            if c.get_zoneA() == zone or c.get_zoneB() == zone:
+                try:
+                    self.remove_connection(c)
+                except GraphException as e:
+                    raise e
+
+    def graphInfo(self) -> str:
         lines = [
             f"Graph: {self.__name}",
             f"Drones: {self.__nb_drones}",
@@ -65,3 +96,28 @@ class Graph:
 
         return "\n".join(lines)
 
+    def get_links(self, zone: Zone) -> list[Connection]:
+        links: list[Connection] = []
+        for c in self.__connections:
+            if c.get_zoneA() == zone or c.get_zoneB() == zone:
+                links.append(c)
+        return links
+
+    def get_min_cost_path(self):
+        stack: list[Zone] = []
+        visited: list[Zone] = []
+        curr: Zone
+        links: list[Connection]
+        stack.append(self.__start)
+        while len(stack) > 0:
+            curr = stack[-1]
+            visited.append(self.__start)
+            links = self.get_connections(curr)
+            # rimuovo conns tra zone gia visitate
+            for l in links:
+                if l.get_zoneA() in visited and l.get_zoneB in visited:
+                    links.remove(l)
+            
+
+ 
+            
