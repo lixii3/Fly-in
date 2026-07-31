@@ -25,10 +25,15 @@ def calcola_trasformazione(nodi: list[Zone], width: int,
         # Usiamo la scala minore per non distorcere le proporzioni del grafo
         scale = min(scale_x, scale_y)
         
+        pixel_w = larghezza_grafo * scale
+        pixel_h = altezza_grafo * scale
+        offset_x = (width - pixel_w) / 2
+        offset_y = (height - pixel_h) / 2
+        
         # 3. Funzione di conversione da applicare a Nodi, Archi e Droni
         def world_to_screen(x, y) -> tuple[int, int]:
-            screen_x = int(padding + (x - min_x) * scale)
-            screen_y = int(padding + (y - min_y) * scale)
+            screen_x = int(offset_x + (x - min_x) * scale)
+            screen_y = int(offset_y + (y - min_y) * scale)
             return (screen_x, screen_y)
 
         return world_to_screen

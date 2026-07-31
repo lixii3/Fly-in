@@ -8,16 +8,21 @@ import os
 
 def test_graph_rendering(graph: Graph):
     pg.init()
+    
     pg.display.set_caption(f"{graph.get_name()} rendering test by lixi")
     screen = pg.display.set_mode()
-    screen.fill("#FFFFFF")
+    background = pg.image.load("fly_in/src/rendering/resources/latios.jpg").convert()
+    background = pg.transform.scale(background, (screen.get_width(), screen.get_height()))
+    screen.blit(background, (0, 0))
+    graph_sourface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
+    graph_rect = graph_sourface.get_rect()
+    graph_rect.center = screen.get_width() // 2, screen.get_height() // 2
+    gr = GraphRenderer()
+
     clock = pg.time.Clock()
-    graph_sourface = pg.Surface((600, 400))
-    graph_rect = graph_sourface.get_rect(topleft=(150,50))
-    gr = GraphRenderer(graph_sourface)
     running = True
     while running:
-        to_screen = gr.drawGraph(graph)
+        to_screen = gr.drawGraph(graph, graph_sourface)
         screen.blit(graph_sourface, graph_rect)
         pg.display.flip()
         clock.tick(60)
@@ -30,7 +35,7 @@ def test_graph_rendering(graph: Graph):
 
 
 if __name__ == "__main__":
-    dir_path = "fly_in/maps/easy/"
+    dir_path = "fly_in/maps/hard/"
     parser: Parser = Parser
     
     try:

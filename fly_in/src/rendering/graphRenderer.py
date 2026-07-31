@@ -7,11 +7,11 @@ from fly_in.src.rendering.utils import calcola_trasformazione
 
 
 class GraphRenderer:
-    def __init__(self, screen: pg.Surface):
-        self.screen: pg.Surface = screen
+    def __init__(self):
         self.font = pg.font.SysFont('Arial', 18)
         
     def drawConnection(self, conn: Connection,
+                       surface: pg.Surface,
                        normalizer_funct: Callable | None=None) -> None:
         color = pg.Color("#000000")
         color.a = 255
@@ -22,9 +22,10 @@ class GraphRenderer:
         if normalizer_funct:
             start = normalizer_funct(xa, ya)
             end = normalizer_funct(xb, yb)
-        pg.draw.line(self.screen, color, start, end, 2)
+        pg.draw.line(surface, color, start, end, 2)
         
     def drawZone(self, zone: Zone,
+                 surface: pg.Surface,
                  normalizer_funct: Callable | None=None,
                  radius: int=30) -> None:
         color = zone.get_color().value
@@ -32,17 +33,16 @@ class GraphRenderer:
         center = (x,y)
         if normalizer_funct:
             center = normalizer_funct(x, y)
-        pg.draw.circle(self.screen, color, center, radius)
+        pg.draw.circle(surface, color, center, radius)
         
-    def drawGraph(self, graph: Graph) -> Callable:
-        self.screen.fill("#FFFFFF")
+    def drawGraph(self, graph: Graph, surface: pg.Surface) -> Callable:
         to_screen: Callable = calcola_trasformazione(graph.get_zones(),
-                                                  self.screen.get_width(),
-                                                  self.screen.get_height())
+                                                  surface.get_width(),
+                                                  surface.get_height())
         for c in graph.get_connections():
-            self.drawConnection(c, to_screen)
+            self.drawConnection(c, surface, to_screen)
         for z in graph.get_zones():
-            self.drawZone(z, to_screen)
+            self.drawZone(z, surface, to_screen)
         
         #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
         return to_screen
