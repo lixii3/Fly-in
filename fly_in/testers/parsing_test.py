@@ -11,7 +11,7 @@ def test_cases(dir_path: str, verbose: bool = False):
     for filename in file_list:
         try:
             output += ('\n' + "=" * 40 + filename + "=" * 40 + '\n')
-            Parser.parse_map(dir_path + '/' + filename)
+            Parser.parse_map(os.path.join(dir_path, filename))
         except (ParsingException, MultipleParsingExceptions, OSError) as e:
             err_list.append(filename)
             output += str(e) + '\n'
