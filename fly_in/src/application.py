@@ -1,4 +1,5 @@
 import pygame as pg
+from copy import deepcopy
 import os
 from fly_in.src.graph import Graph
 from fly_in.src.rendering.graphRenderer import GraphRenderer
@@ -32,9 +33,9 @@ class Application:
         self._change_mode("menu")
         
     def _load_resources(self) -> None:
-        self.fonts = {}
-        self.backgrounds = {}
-        self.buttons = {}
+        self.fonts: dict[str, pg.font.Font] = {}
+        self.backgrounds: dict[str, pg.Surface] = {}
+        self.buttons: dict[str, PNGButton] = {}
 
         _font_path = "fly_in/src/rendering/resources/fonts"
         _bg_path = "fly_in/src/rendering/resources/bg"
@@ -60,7 +61,7 @@ class Application:
         if os.path.exists(_btns_path):
             for file in os.listdir(_btns_path):
                 name = file.rsplit(".", 1)[0]
-                button = PNGButton(f"{_btns_path}/{file}", text=name, font=self.fonts['pixel'])
+                button = PNGButton(f"{_btns_path}/{file}", name=name, font=self.fonts['pixel'])
                 self.buttons[name] = button
 
     def run(self) -> None:
@@ -75,34 +76,10 @@ class Application:
             self.CLOCK.tick(self.FPS)
         pg.quit()
         
-    def _change_mode(self, new_mode: str) -> None:
-        """Cambia lo stato del gioco, aggiorna lo sfondo e prepara i bottoni."""
-        self.MODE = new_mode
-        self.active_sprites.empty() # Rimuove i vecchi bottoni
-
-        if self.MODE == "menu":
-            # 1. Recupera il bottone 'maps' se esiste
-            if "maps" in self.buttons:
-                btn_maps = self.buttons["maps"]
-                # Lo centra
-                btn_maps.rect.center = (self.WIDTH // 2, self.HEIGHT // 2)
-                # Lo aggiunge agli sprite visibili
-                self.active_sprites.add(btn_maps)
-
-        elif self.MODE == "map_list":
-            map_keys = ["easy", "medium", "hard", "challenger"]
-            start_y = self.HEIGHT // 2 - 100
-            spacing_y = 80
-            
-            for i, key in enumerate(map_keys):
-                if key in self.buttons:
-                    btn = self.buttons[key]
-                    # Li posiziona in colonna al centro
-                    btn.rect.center = (self.WIDTH // 2, start_y + (i * spacing_y))
-                    self.active_sprites.add(btn)
                     
 
     def _handle_events(self, events: list) -> None:
+
         for event in events:
             if event.type == pg.QUIT:
                 self.running = False
@@ -110,27 +87,61 @@ class Application:
                 if event.key == pg.K_ESCAPE:
                     self.running = False
         # click su bottoni attivi
+        btn: PNGButton
         for btn in self.active_sprites:
             if btn.is_clicked(events):
-                for name, ref in self.buttons.items():
-                    if ref == btn:
-                        self._click(name)
-                        break   
+                self._click(btn.name)
+                break   
                         
     def _click(self, event_name: str) -> None:
         if event_name == "maps":
             self._change_mode("map_list")
             
-        elif event_name == "documentation":
-            self._change_mode("documentation")
+        elif event_name == "about":
+            self._change_mode("about")
             
         # Ritorno al menu da una mappa
         elif event_name in ["map1", "map2", "map3", "map4"]:
             print(f"Hai selezionato {event_name}!")
     
-    
     def _update(self) -> None:
         self.active_sprites.update()
+
+    def _change_mode(self, new_mode: str) -> None:
+        """Cambia lo stato del gioco, aggiorna lo sfondo e prepara i bottoni."""
+        self.MODE = new_mode
+        self.active_sprites.empty() # Rimuove i vecchi bottoni
+        
+        titles: list[str] = []
+        start_y = self.HEIGHT // 2 - 100
+        spacing_y = 100
+        
+        def create_btns(titles: list[str], button: PNGButton,
+                        start_y: int, spacing_y: int) -> None:
+            for i, t in enumerate(titles):
+                if "menu" in self.buttons:
+                    btn = deepcopy(button)
+                    btn.name = t
+                    btn.add_text(t)
+                    # Li posiziona in colonna al centro
+                    btn.rect.center = (self.WIDTH // 2, start_y + (i * spacing_y))
+                    self.active_sprites.add(btn)
+
+        if self.MODE == "menu":
+            titles = ["maps", "about", "quit"]
+            # 1. Recupera il bottone 'menu' se esiste
+            if "menu" in self.buttons:
+                create_btns(titles, self.buttons["menu"], start_y, spacing_y)
+
+        elif self.MODE == "map_list":
+            titles = ["easy", "medium", "hard", "challenger", "back"]
+            if "menu" in self.buttons:
+                create_btns(titles, self.buttons["menu"], start_y, spacing_y)
+                
+        elif self.MODE == "about":
+            titles = ["back"]
+            if "menu" in self.buttons:
+                create_btns(titles, self.buttons["menu"], start_y + self.HEIGHT // 3, spacing_y)
         
     def _draw(self) -> None:
         self.BG = self.backgrounds.get(self.MODE)
@@ -139,7 +150,7 @@ class Application:
         else:
             self.SCREEN.fill((0, 0, 0))
 
-        # 2. Disegna tutti gli sprite attivi
+        # Disegna tutti gli sprite attivi
         self.active_sprites.draw(self.SCREEN)
 
         pg.display.flip()
