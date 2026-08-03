@@ -44,7 +44,7 @@ class Application:
         self.CLOCK = pg.time.Clock()
         self.MODE: Mode = Mode.NONE
         self.__running = False
-        self.__active_sprites = pg.sprite.Group()
+        self.__active_sprites: pg.sprite.Group[PNGButton] = pg.sprite.Group()
         
         self._load_resources()
         
@@ -113,24 +113,31 @@ class Application:
                 break   
                         
     def _click(self, event_name: str) -> None:
+        _btn_names = [sp.name for sp in self.__active_sprites]
+
         if event_name in ["maps", "about"]:
             self._change_mode(Mode.get(event_name))
-    
         elif event_name == "back":
             self._change_mode(self.MODE.get_back())
         elif event_name == "quit":
             self.__running = False
             return
+        elif self.MODE == Mode.MAPS and event_name in set(_btn_names) - set("back"):
+            self._change_mode(Mode.LEVELS, event_name)
+            
     
     def _update(self) -> None:
         self.__active_sprites.update()
 
-    def _change_mode(self, new_mode: Mode) -> None:
-        """Cambia lo stato del gioco, aggiorna lo sfondo e prepara i bottoni."""
+    def _change_mode(self, new_mode: Mode,
+                     clicked: str="") -> None:
         self.MODE = new_mode
         if self.MODE is Mode.NONE:
             self.__running = False
             return
+        _clicked = clicked
+        _button: str = "menu"
+        _maps_path = "fly_in/maps"
         self.__active_sprites.empty() # Rimuove i vecchi bottoni
         
         titles: list[str] = []
@@ -140,35 +147,47 @@ class Application:
         def create_btns(titles: list[str], button: PNGButton,
                         start_y: int, spacing_y: int) -> None:
             for i, t in enumerate(titles):
-                if "menu" in self.buttons:
+                if t == "back" and "menu_white" in self.buttons:
+                    btn = deepcopy(self.buttons["menu_white"])
+                else:
                     btn = deepcopy(button)
-                    btn.name = t
-                    btn.add_text(t)
-                    # Li posiziona in colonna al centro
-                    btn.rect.center = (self.WIDTH // 2, start_y + (i * spacing_y))
-                    self.__active_sprites.add(btn)
+                btn.name = t
+                btn.add_text(t)
+                # Li posiziona in colonna al centro
+                btn.rect.center = (self.WIDTH // 2, start_y + (i * spacing_y))
+                self.__active_sprites.add(btn)
 
         if self.MODE == Mode.MENU:
             titles = ["maps", "about", "quit"]
-            # 1. Recupera il bottone 'menu' se esiste
-            if "menu" in self.buttons:
-                create_btns(titles, self.buttons["menu"], start_y, spacing_y)
-
+            
         elif self.MODE == Mode.MAPS:
-            _maps_path = "fly_in/maps"
             titles = os.listdir(_maps_path)
             titles = [dir for dir in titles if 
-                      os.path.isdir(os.path.join(_maps_path, dir))]
-            if "menu" in self.buttons:
-                create_btns(titles, self.buttons["menu"], start_y, spacing_y)
-                
+                        os.path.isdir(os.path.join(_maps_path, dir))]
+            titles.append("back")
+            
         elif self.MODE == Mode.ABOUT:
             titles = ["back"]
-            if "menu" in self.buttons:
-                create_btns(titles, self.buttons["menu"], start_y + self.HEIGHT // 3, spacing_y)
+            start_y = start_y + self.HEIGHT // 3
+            
+        elif self.MODE == Mode.LEVELS:
+            _path = os.path.join(_maps_path, _clicked)
+            for filename in os.listdir(_path):
+               if os.path.isfile(os.path.join(_path, filename)) and filename.endswith(".txt"):
+                   name = filename.rsplit(".")[0]
+                   titles.append(name)
+            titles.append("back")
+            _button = "menu_white"
+
+        if _button in self.buttons:
+            create_btns(titles, self.buttons[_button], start_y, spacing_y)
+        else:
+            create_btns(titles, PNGButton(""), start_y, spacing_y)
         
     def _draw(self) -> None:
         self.BG = self.backgrounds.get(self.MODE.value)
+        if self.MODE == Mode.LEVELS:
+            self.BG = self.backgrounds.get(Mode.MAPS.value)
         if self.BG:
             self.SCREEN.blit(self.BG, (0, 0))
         else:
@@ -176,9 +195,7 @@ class Application:
 
         # Disegna tutti gli sprite attivi
         self.__active_sprites.draw(self.SCREEN)
-
         pg.display.flip()
-
 
 if __name__ == '__main__':
     app = Application()

@@ -18,7 +18,7 @@ class PNGButton(pygame.sprite.Sprite):
         outline_thickness: int = 2,
         glow_color=(255, 255, 0),
         glow_radius=15,
-        glow_passes=10,
+        glow_passes=10
     ):
         super().__init__()
 
@@ -169,7 +169,12 @@ class PNGButton(pygame.sprite.Sprite):
             text_rect = combined_text_surf.get_rect(
                 center=(btn_center_x, btn_center_y)
             )
-
+            
+            # VOGLIO STRETCHARE IL BOTTONE SE NON CI ENTRA IL TESTO
+            #if text_rect.width > self.glow_image.get_width():
+            #    self.glow_image = pygame.transform.scale(self.glow_image,
+            #                                             (text_rect.width + 10,
+            #                                              self.glow_image.get_height()))
             self.original_image.blit(combined_text_surf, text_rect)
 
         self.glow_image = self._create_glow_image()
