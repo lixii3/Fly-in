@@ -1,9 +1,9 @@
 import sys
-import pygame
+import pygame as pg
 import copy
 
 
-class PNGButton(pygame.sprite.Sprite):
+class PNGButton(pg.sprite.Sprite):
 
     def __init__(
         self,
@@ -12,7 +12,7 @@ class PNGButton(pygame.sprite.Sprite):
         x: int = 0,
         y: int = 0,
         text: str = "",
-        font: pygame.font.Font = None,
+        font: pg.font.Font = None,
         text_color: tuple = (255, 255, 255),
         outline_color: tuple = (0, 0, 0),
         outline_thickness: int = 2,
@@ -30,14 +30,25 @@ class PNGButton(pygame.sprite.Sprite):
         self.outline_thickness = outline_thickness
 
         try:
-            # Creiamo una base fissa (senza testo) per poter riscrivere il testo in futuro
-            self.base_image = pygame.image.load(image_path).convert_alpha()
+            # Carica l'immagine originale
+            loaded_image = pg.image.load(image_path).convert_alpha()
+            
+            # Ricava la lista dei rettangoli dei pixel visibili
+            mask = pg.mask.from_surface(loaded_image)
+            rects = mask.get_bounding_rects()
+            
+            if rects:
+                # Unisce tutti i rettangoli trovati in un unico rettangolo contenitore
+                visible_rect = pg.Rect.unionall(rects[0], rects[1:])
+                self.base_image = loaded_image.subsurface(visible_rect).copy()
+            else:
+                self.base_image = loaded_image
         except FileNotFoundError:
-            self.base_image = pygame.Surface((150, 50), pygame.SRCALPHA)
-            pygame.draw.rect(
+            self.base_image = pg.Surface((150, 50), pg.SRCALPHA)
+            pg.draw.rect(
                 self.base_image, (200, 50, 50), (0, 0, 150, 50)
             )
-            
+
         # L'immagine originale di partenza è un clone della base pulita
         self.original_image = self.base_image.copy()
 
@@ -50,12 +61,12 @@ class PNGButton(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x, y))
         self.is_hovered = False
 
-        # Se viene passato un testo all'avvio, usa direttamente il nuovo metodo
+        # Se viene passato un testo all'avvio
         if text:
             self.add_text(text)
         else:
             self.glow_image = self._create_glow_image()
-        self.mask = pygame.mask.from_surface(self.original_image)
+        self.mask = pg.mask.from_surface(self.original_image)
     
     
     def __deepcopy__(self, memo):
@@ -96,16 +107,17 @@ class PNGButton(pygame.sprite.Sprite):
 
         # Clona il rect
         new_btn.rect = self.rect.copy()
-        new_btn.mask = pygame.mask.from_surface(new_btn.original_image)
+        new_btn.mask = pg.mask.from_surface(new_btn.original_image)
 
         return new_btn
 
-    def _create_glow_image(self) -> pygame.Surface:
-        mask = pygame.mask.from_surface(self.original_image)
+    def _create_glow_image(self) -> pg.Surface:
+        mask = pg.mask.from_surface(self.original_image)
         padding = self.glow_radius * 2
         glow_size = (self.rect.width + padding, self.rect.height + padding)
-        glow_surface = pygame.Surface(glow_size, pygame.SRCALPHA)
+        glow_surface = pg.Surface(glow_size, pg.SRCALPHA)
 
+        # creo il fade del glow strato per strato
         base_alpha = 100
         for p in range(self.glow_passes):
             thickness = int((p + 1) * self.glow_radius / self.glow_passes)
@@ -118,9 +130,9 @@ class PNGButton(pygame.sprite.Sprite):
             if not points:
                 continue
 
-            contour_surf = pygame.Surface(glow_size, pygame.SRCALPHA)
+            contour_surf = pg.Surface(glow_size, pg.SRCALPHA)
             for pt in points:
-                pygame.draw.circle(
+                pg.draw.circle(
                     contour_surf,
                     (*self.glow_color, alpha),
                     (pt[0] + self.glow_radius, pt[1] + self.glow_radius),
@@ -134,8 +146,7 @@ class PNGButton(pygame.sprite.Sprite):
         return glow_surface
     
     def add_text(self, text: str) -> None:
-        """Aggiunge o sovrascrive un testo al centro del bottone."""
-        # Resetta l'immagine all'originale per evitare sovrapposizioni di scritte
+        # Resetta l'immagine all'originale pulita
         self.original_image = self.base_image.copy()
 
         # Rendering del testo
@@ -143,12 +154,12 @@ class PNGButton(pygame.sprite.Sprite):
             text_surf = self.font.render(text, False, self.text_color)
             outline_surf = self.font.render(text, False, self.outline_color)
 
-            # Crea una superficie per il testo
+            # Crea una superficie per il testo (incluso lo spessore del bordo)
             tw = text_surf.get_width() + self.outline_thickness * 2
             th = text_surf.get_height() + self.outline_thickness * 2
-            combined_text_surf = pygame.Surface((tw, th), pygame.SRCALPHA)
+            combined_text_surf = pg.Surface((tw, th), pg.SRCALPHA)
 
-            # Disegna il bordo nero
+            # Disegna il bordo
             for dx in range(-self.outline_thickness, self.outline_thickness + 1):
                 for dy in range(-self.outline_thickness, self.outline_thickness + 1):
                     if dx != 0 or dy != 0:
@@ -156,36 +167,52 @@ class PNGButton(pygame.sprite.Sprite):
                             outline_surf,
                             (dx + self.outline_thickness, dy + self.outline_thickness),
                         )
-            self.mask = pygame.mask.from_surface(self.original_image)
 
-            # Disegna il testo principale centrato
+            # Disegna il testo principale
             combined_text_surf.blit(
                 text_surf, (self.outline_thickness, self.outline_thickness)
             )
 
-            # Stampa il testo con bordo al centro del bottone
+            padding = 20
+            
+            # Se il testo supera la larghezza attuale della base
+            if combined_text_surf.get_width() + padding > self.base_image.get_width():
+                new_width = combined_text_surf.get_width() + padding
+                new_height = self.base_image.get_height()
+                
+                # Scaliamo sia la base_image che l'original_image per mantenere la coerenza
+                self.base_image = pg.transform.scale(self.base_image, (new_width, new_height))
+                self.original_image = self.base_image.copy()
+
+            # Aggiorniamo subito il rect con le nuove dimensioni
+            topleft_pos = self.rect.topleft if hasattr(self, 'rect') else (0, 0)
+            self.rect = self.original_image.get_rect(topleft=topleft_pos)
+
+            # Ricalcolo il centro
             btn_center_x = self.original_image.get_width() // 2
             btn_center_y = self.original_image.get_height() // 2
             text_rect = combined_text_surf.get_rect(
                 center=(btn_center_x, btn_center_y)
             )
-            
-            # VOGLIO STRETCHARE IL BOTTONE SE NON CI ENTRA IL TESTO
-            #if text_rect.width > self.glow_image.get_width():
-            #    self.glow_image = pygame.transform.scale(self.glow_image,
-            #                                             (text_rect.width + 10,
-            #                                              self.glow_image.get_height()))
-            self.original_image.blit(combined_text_surf, text_rect)
 
+            # Applico il testo e aggiorno la maschera
+            self.original_image.blit(combined_text_surf, text_rect)
+            self.mask = pg.mask.from_surface(self.original_image)
+
+        # Rigenera l'effetto glow
         self.glow_image = self._create_glow_image()
 
+        # Imposta l'immagine visibile finale
         if self.is_hovered:
             self.image = self.glow_image
+            self.rect = self.image.get_rect(
+                topleft=(self.rect.x - self.glow_radius, self.rect.y - self.glow_radius)
+            )
         else:
             self.image = self.original_image
 
     def update(self) -> None:
-        mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = pg.mouse.get_pos()
         was_hovered = self.is_hovered
         
         # 1. Controllo base sul rettangolo (molto veloce)
@@ -233,6 +260,6 @@ class PNGButton(pygame.sprite.Sprite):
     def is_clicked(self, event_list: list) -> bool:
         if self.is_hovered:
             for event in event_list:
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:
                     return True
         return False

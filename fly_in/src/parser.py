@@ -6,11 +6,14 @@ from pydantic import ValidationError
 
 
 class ParsingException(Exception):
-    def __init__(self, map_name: str = "", line: int = -1, msg: str | None = None):
+    def __init__(self, map_name: str = "", line: int = -1, msg: str | None = None,
+                 fmsg: str = ""):
         self.msg = msg
         self.map = map_name
         self.line = line
-        self.fmsg = f"Error on line {line} in map '{map_name}': {msg}"
+        self.fmsg = fmsg
+        if self.fmsg == "":
+            self.fmsg = f"Error on line {line} in map '{map_name}': {msg}"
         if line == -1:
             self.fmsg = f"Error in map '{map_name}': {msg}"
         super().__init__(self.fmsg, map_name, line)
@@ -83,7 +86,7 @@ class Parser:
                         error_list.append(ParsingException(g_name, nb_line, e.msg))
                     nb_line += 1
         except OSError as e:
-            raise e
+            raise ParsingException(msg="Map name not found in directory")
 
         # stampa errori e raise finale
         if len(error_list) > 0:

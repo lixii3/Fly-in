@@ -11,7 +11,7 @@ def test_graph_rendering(graph: Graph):
     
     pg.display.set_caption(f"{graph.get_name()} rendering test by lixi")
     screen = pg.display.set_mode()
-    background = pg.image.load("fly_in/src/rendering/resources/latios.jpg").convert()
+    background = pg.image.load("fly_in/src/rendering/resources/bg/latios.jpg").convert()
     background = pg.transform.scale(background, (screen.get_width(), screen.get_height()))
     screen.blit(background, (0, 0))
     graph_sourface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
@@ -35,7 +35,7 @@ def test_graph_rendering(graph: Graph):
 
 
 if __name__ == "__main__":
-    dir_path = "fly_in/maps/hard/"
+    dir_path = "fly_in/maps/easy/"
     parser: Parser = Parser
     
     try:
