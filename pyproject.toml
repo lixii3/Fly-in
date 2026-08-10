@@ -10,6 +10,7 @@ packages = [{ include = "fly_in" }]
 python = ">=3.10"
 pydantic = ">=2.13.4,<3.0.0"
 pygame = "^2.6.1"
+pillow = "^12.3.0"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "*"

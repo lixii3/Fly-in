@@ -1,14 +1,17 @@
 from __future__ import annotations
 import pygame as pg
 import os
+# from PIL import Image
 from enum import Enum
 from copy import deepcopy
 from fly_in.src.graph import Graph
 from fly_in.src.parser import Parser, ParsingException, MultipleParsingExceptions
 from fly_in.src.rendering.graphRenderer import GraphRenderer
+from fly_in.src.rendering.droneRenderer import DroneRenderer
 from fly_in.src.rendering.pngButton import PNGButton
 
 
+_curr_path = ""
 class ApplicationException(Exception):
     def __init__(self, msg: str="", err_list: list[Exception] | None = None):
         self.msg = msg
@@ -54,9 +57,11 @@ class Application:
         self.CLOCK = pg.time.Clock()
         self.MODE: Mode = Mode.NONE
         self.__running = False
-        self.__active_sprites: pg.sprite.Group[PNGButton] = pg.sprite.Group()
-        self.__active_graph_surface: pg.Surface
+        self.__active_buttons: pg.sprite.Group[PNGButton] = pg.sprite.Group()
+        self.__active_graph_surface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
+        # self.__drone_surface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
         self.__gr: GraphRenderer = GraphRenderer()
+        self.__dr: DroneRenderer = DroneRenderer("fly_in/src/rendering/resources/sprites/drone.png")
         
         self._load_resources()
         
@@ -124,13 +129,13 @@ class Application:
                     self.__running = False
         # click su bottoni attivi
         btn: PNGButton
-        for btn in self.__active_sprites:
+        for btn in self.__active_buttons:
             if btn.is_clicked(events):
                 self._click(btn.name)
                 break   
                         
     def _click(self, event_name: str) -> None:
-        _btn_names = [sp.name for sp in self.__active_sprites]
+        _btn_names = [sp.name for sp in self.__active_buttons]
         try:
             if event_name in ["maps", "about"]:
                 self._change_mode(Mode.get(event_name))
@@ -150,12 +155,12 @@ class Application:
             
     
     def _update(self) -> None:
-        self.__active_sprites.update()
+        self.__active_buttons.update()
 
     def _change_mode(self, new_mode: Mode,
                      clicked: str="") -> None:
         self.MODE = new_mode
-        self.__active_sprites.empty() # Rimuove i vecchi bottoni
+        self.__active_buttons.empty() # Rimuove i vecchi bottoni
 
         if self.MODE is Mode.NONE:
             self.__running = False
@@ -167,11 +172,11 @@ class Application:
         else:
             _button = PNGButton("")
         _maps_path = "fly_in/maps"
-        _curr_path = ""
+        global _curr_path
         titles: list[str] = []
         start_y = self.HEIGHT // 2 - 100
         spacing_y = 100
-        centered = True
+        centered= True
         start_x = 150
 
         
@@ -193,7 +198,7 @@ class Application:
                     btn.rect.center = (start_x, start_y + (i * spacing_y))
                 # setto il text
                 btn.add_text(t)
-                self.__active_sprites.add(btn)
+                self.__active_buttons.add(btn)
 
         def __menu_layout() -> None:
             titles = ["maps", "about", "quit"]
@@ -212,14 +217,15 @@ class Application:
                         centered, start_x)
             
         def __about_layout() -> None:
+            nonlocal start_y
             titles = ["back"]
             start_y = start_y + self.HEIGHT // 3
             create_btns(titles, _button, start_y,
                         spacing_y, centered, start_x)
             
         def __levels_layout() -> None:
-            nonlocal _curr_path
-            _curr_path = os.path.join(_maps_path, _clicked) 
+            global _curr_path
+            _curr_path = os.path.join(_maps_path, _clicked)
             for filename in os.listdir(_curr_path):
                if os.path.isfile(os.path.join(_curr_path, filename)) and filename.endswith(".txt"):
                    name = filename.rsplit(".")[0]
@@ -236,18 +242,19 @@ class Application:
                         centered, start_x)
         
         def __flying_layout() -> None:
-            nonlocal _curr_path
-            _curr_path = os.path.join(_curr_path, _clicked)
+            global _curr_path
+            _curr_path = os.path.join(_curr_path, _clicked + ".txt")
+            print(_curr_path)
             titles = ["back"]
-            start_y = self.SCREEN.get_height() // 4 * 3 # posizione ad un quarto dalla fine dello schermo
+            start_y = self.SCREEN.get_height() // 10 * 9 # posizione ad un quarto dalla fine dello schermo
             create_btns(titles, _button, start_y)
-            self._graph_sourface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
             try:
-                graph = Parser.parse_map(os.path.join(_curr_path + ".txt"))
+                graph = Parser.parse_map(os.path.join(_curr_path))
             except (ParsingException, MultipleParsingExceptions) as e:
                 err_list = [e]
                 raise ApplicationException("__flying_layout", err_list)
-            self.__active_graph_surface = self.__gr.drawGraph(graph, self._graph_sourface)
+            self.ft_mapping = self.__gr.drawGraph(graph, self.__active_graph_surface)
+            self.__dr.drawDrones(self.__active_graph_surface, graph, self.ft_mapping)
             
         # SMISTAMENTO
         try:
@@ -273,14 +280,12 @@ class Application:
             self.SCREEN.fill((0, 0, 0))
         if self.MODE == Mode.FLYING:
             if not self.__active_graph_surface:
-                raise ApplicationException("Unexistant graph to draw")
+                raise ApplicationException("Unexistent graph to draw")
             graph_rect = self.__active_graph_surface.get_rect()
             graph_rect.center = self.SCREEN.get_width() // 2, self.SCREEN.get_height() // 2
             self.SCREEN.blit(self.__active_graph_surface, graph_rect)
-            self.SCREEN.blit()
-
         # Disegna tutti gli sprite attivi
-        self.__active_sprites.draw(self.SCREEN)
+        self.__active_buttons.draw(self.SCREEN)
         pg.display.flip()
 
 if __name__ == '__main__':

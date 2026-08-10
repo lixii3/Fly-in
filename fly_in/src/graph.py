@@ -55,6 +55,9 @@ class Graph:
     def get_connections(self) -> List[Connection]:
         return self.__connections
     
+    def get_drones(self) -> List[Drone]:
+        return self.__drones
+    
     def add_drone(self, drone: Drone) -> None:
         if drone in self.__drones:
             raise GraphException(f"Drone '{drone.ID}' already in graph '{self.__name}'")
