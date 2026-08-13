@@ -25,16 +25,21 @@ class Graph:
         self.__drones: List[Drone] = []
 
         for h in data.hubs:
+            z = Zone(h)
             if h.tag == ParsingTags.START_HUB:
-                self.__start = h
+                self.__start = z
             elif h.tag == ParsingTags.END_HUB:
-                self.__end = h
-            self.__zones.append(Zone(h))
+                self.__end = z
+            self.__zones.append(z)
         for c in data.connections:
             try:
                 self.__connections.append(Connection(c, self.__zones))
             except ConnectionException as e:
                 raise GraphException(str(e))
+        for _ in range(data.nb_drones):
+            d = Drone()
+            self.__drones.append(d)
+            d.set_where(self.__start)
 
     ##### GETTERS #######
     def get_name(self) -> str:

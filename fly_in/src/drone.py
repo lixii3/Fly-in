@@ -1,29 +1,71 @@
 from __future__ import annotations
 from typing import Final, TYPE_CHECKING
-from fly_in.src.utils import ParsingTags
-
+from fly_in.src.utils import ParsingTags, ParsingZoneType
 
 if TYPE_CHECKING:
     from fly_in.src.zone import Zone
     from fly_in.src.connection import Connection
+
 class Drone:
-    __counter = 0
+    _counter = 0
+
     def __init__(self) -> None:
-        self.ID: Final[str] = f"DR-{str(self.__counter).zfill(4)}"
+        self.ID: Final[str] = f"DR-{str(Drone._counter).zfill(4)}"
         self.__where: Zone | Connection = None
-        self.__counter += 1
+        Drone._counter += 1
+        self.speed = 1.0
+        self.progress = 0.0
 
     def set_where(self, where: Zone | Connection | None) -> None:
         self.__where = where
+    
+    def update_speed(self) -> None:
+        where = self.get_where()
+        self.speed = 1.0
+        
+        if where and type(where).__name__ == "Zone":
+            self.speed /= float(where.get_type().value())
 
-    def get_where(self) -> Zone:
+    def get_where(self) -> Zone | Connection:
         return self.__where
+    
+    def get_coordinates(self) -> tuple[float, float]:
+        where = self.get_where()
+        
+        if where and type(where).__name__ == "Zone":
+            return where.get_coordinates()
+        elif where:
+            return where.get_coordinates_at(self.progress)
+            
+        return (0.0, 0.0)
 
     def at_end(self) -> bool:
-        return self.__where.get_type() == ParsingTags.END_HUB
+        where = self.get_where()
+        if where and type(where).__name__ == "Zone":
+            return where.get_type() == ParsingTags.END_HUB
+        return False
     
     def at_start(self) -> bool:
-        return self.__where.get_type() == ParsingTags.START_HUB
+        where = self.get_where()
+        if where and type(where).__name__ == "Zone":
+            return where.get_type() == ParsingTags.START_HUB
+        return False
 
-# if __name__ == "__main__":
-#     print(str(115).zfill(10))
+    def update(self, base_step: float) -> None:
+        where = self.get_where()
+        
+        if where and type(where).__name__ == "Connection":
+            cost = where.get_zoneA().get_cost()
+            actual_step = base_step / cost
+            
+            self.progress += actual_step
+  
+            if self.progress >= 1.0:
+                self.progress = 1.0
+                
+                # Spostiamo il drone sul nodo di destinazione
+                self.set_where(where.get_zoneB())
+                self.progress = 0.0
+                
+                # Aggiorniamo la velocità in base al nuovo nodo raggiunto
+                self.update_speed()

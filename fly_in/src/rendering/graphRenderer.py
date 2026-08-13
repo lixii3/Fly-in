@@ -35,7 +35,9 @@ class GraphRenderer:
             center = normalizer_funct(x, y)
         pg.draw.circle(surface, color, center, radius)
         
-    def drawGraph(self, graph: Graph, surface: pg.Surface) -> Callable:
+    def drawGraph(self, graph: Graph,
+                  surface: pg.Surface) -> Callable[[int, int],
+                                                   tuple[int, int]]:
         to_screen: Callable = calcola_trasformazione(graph.get_zones(),
                                                   surface.get_width(),
                                                   surface.get_height())

@@ -10,9 +10,20 @@ class DroneRenderer:
         self.img = pg.transform.scale(self.img, (100, 100))
         self.font = pg.font.SysFont('Arial', 18)
     
-    def drawDrones(self, screen: pg.Surface, graph: Graph, ft_mapping: Callable) -> None:
+    def drawDrone(self, screen: pg.Surface,
+                  d: Drone,
+                  ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+        x, y = d.get_coordinates()
+        if ft_mapping:
+            x, y = ft_mapping(x, y)
+        img_rect = self.img.get_rect(center=(x, y))
+        screen.blit(self.img, img_rect)
+        print(f"{d.ID} : {x}, {y}")
+        
+    
+    def drawDrones(self, screen: pg.Surface, graph: Graph,
+                   ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
         for d in graph.get_drones():
-            x, y = ft_mapping(d.get_where().get_x(), d.get_where().get_y())
-            img_rect = self.img.get_rect(x=x, y=y)
-            screen.blit(self.img, img_rect)
+            self.drawDrone(screen, d, ft_mapping)
+            
             

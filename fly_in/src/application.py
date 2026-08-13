@@ -5,6 +5,7 @@ import os
 from enum import Enum
 from copy import deepcopy
 from fly_in.src.graph import Graph
+from fly_in.src.drone import Drone
 from fly_in.src.parser import Parser, ParsingException, MultipleParsingExceptions
 from fly_in.src.rendering.graphRenderer import GraphRenderer
 from fly_in.src.rendering.droneRenderer import DroneRenderer
@@ -59,7 +60,7 @@ class Application:
         self.__running = False
         self.__active_buttons: pg.sprite.Group[PNGButton] = pg.sprite.Group()
         self.__active_graph_surface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
-        # self.__drone_surface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
+        self.__graph: Graph
         self.__gr: GraphRenderer = GraphRenderer()
         self.__dr: DroneRenderer = DroneRenderer("fly_in/src/rendering/resources/sprites/drone.png")
         
@@ -156,6 +157,12 @@ class Application:
     
     def _update(self) -> None:
         self.__active_buttons.update()
+        
+        if self.MODE == Mode.FLYING:
+            if self.__graph:
+                base_step = 1.0 / self.FPS        
+                for drone in self.__graph.get_drones():
+                    drone.update(base_step) # Passiamo il passo base al drone
 
     def _change_mode(self, new_mode: Mode,
                      clicked: str="") -> None:
@@ -249,12 +256,10 @@ class Application:
             start_y = self.SCREEN.get_height() // 10 * 9 # posizione ad un quarto dalla fine dello schermo
             create_btns(titles, _button, start_y)
             try:
-                graph = Parser.parse_map(os.path.join(_curr_path))
+                self.__graph = Parser.parse_map(os.path.join(_curr_path))
             except (ParsingException, MultipleParsingExceptions) as e:
                 err_list = [e]
                 raise ApplicationException("__flying_layout", err_list)
-            self.ft_mapping = self.__gr.drawGraph(graph, self.__active_graph_surface)
-            self.__dr.drawDrones(self.__active_graph_surface, graph, self.ft_mapping)
             
         # SMISTAMENTO
         try:
@@ -281,6 +286,9 @@ class Application:
         if self.MODE == Mode.FLYING:
             if not self.__active_graph_surface:
                 raise ApplicationException("Unexistent graph to draw")
+            self.__active_graph_surface.fill((0, 0, 0, 0))
+            self.ft_mapping = self.__gr.drawGraph(self.__graph, self.__active_graph_surface)
+            self.__dr.drawDrones(self.__active_graph_surface, self.__graph, self.ft_mapping)
             graph_rect = self.__active_graph_surface.get_rect()
             graph_rect.center = self.SCREEN.get_width() // 2, self.SCREEN.get_height() // 2
             self.SCREEN.blit(self.__active_graph_surface, graph_rect)
