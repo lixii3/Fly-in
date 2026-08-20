@@ -15,8 +15,8 @@ class DroneRenderer:
                   ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
         x, y = d.get_coordinates()
         if ft_mapping:
-            x, y = ft_mapping(x, y)
-        img_rect = self.img.get_rect(center=(x, y))
+            x1, y1 = ft_mapping(x, y)
+        img_rect = self.img.get_rect(center=(x1, y1))
         screen.blit(self.img, img_rect)
         print(f"{d.ID} : {x}, {y}")
         
@@ -25,5 +25,3 @@ class DroneRenderer:
                    ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
         for d in graph.get_drones():
             self.drawDrone(screen, d, ft_mapping)
-            
-            

@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fly_in.src.validation_models import MapData
 from fly_in.src.utils import ParsingTags
-from typing import List
+from typing import List, overload
 from fly_in.src.connection import Connection, ConnectionException
 from fly_in.src.zone import Zone
 from fly_in.src.drone import Drone
@@ -60,6 +60,22 @@ class Graph:
     def get_connections(self) -> List[Connection]:
         return self.__connections
     
+    def get_zone_connections(self, zone: Zone) -> List[Zone]:
+        connected: List[Zone] = []
+        for c in self.__connections:
+            if c.get_zoneA() == zone:
+                connected.append(c.get_zoneB())
+            elif c.get_zoneB() == zone:
+                connected.append(c.get_zoneA())
+        return connected
+
+    def remove_connection(self, conn: Connection) -> None:
+        try:
+            self.__connections.remove(conn)
+        except ValueError:
+            GraphException(f"Error: unexistant '{conn.get_name()}' connection"
+                           f"in graph '{self.__name}'")
+    
     def get_drones(self) -> List[Drone]:
         return self.__drones
     
@@ -69,12 +85,6 @@ class Graph:
         drone.set_where(self.get_start())
         self.__drones.append(drone)
     
-    def remove_connection(self, conn: Connection) -> None:
-        try:
-            self.__connections.remove(conn)
-        except ValueError:
-            GraphException(f"Error: unexistant '{conn.get_name()}' connection"
-                           f"in graph '{self.__name}'")
 
     def remove_zone(self, zone: Connection) -> None:
         try:
@@ -128,7 +138,7 @@ class Graph:
         stack.append(self.__start)
         while len(stack) > 0:
             curr = stack[-1]
-            visited.append(self.__start)
+            visited.append(curr)
             links = self.get_connections(curr)
             # rimuovo conns tra zone gia visitate
             for l in links:

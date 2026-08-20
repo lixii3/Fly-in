@@ -1,3 +1,4 @@
+from __future__ import annotations
 from enum import Enum
 
 
@@ -40,3 +41,21 @@ class ParsingColors(Enum):
     @classmethod
     def getColor(cls, color: str):
         return cls.__members__.get(color.upper(), ParsingColors.WHITE)
+
+class Mode(Enum):
+    NONE = None
+    MENU = "menu"
+    MAPS = "maps"
+    ABOUT = "about"
+    LEVELS = "levels"
+    FLYING = "flying"
+    
+    
+    def get_back(self) -> Mode:
+        match self:
+            case Mode.LEVELS: return Mode.MAPS
+            case _: return self.MENU
+    
+    @classmethod
+    def get(cls, mode: str):
+        return cls.__members__.get(mode.upper(), Mode.NONE)
