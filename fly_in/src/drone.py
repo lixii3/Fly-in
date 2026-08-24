@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Final, TYPE_CHECKING
-from fly_in.src.utils import ParsingTags, ParsingZoneType
+from fly_in.src.utils import ParsingTags
 
 if TYPE_CHECKING:
     from fly_in.src.zone import Zone
@@ -10,14 +10,19 @@ class Drone:
     _counter = 0
 
     def __init__(self) -> None:
-        self.ID: Final[str] = f"DR-{str(Drone._counter).zfill(4)}"
+        self.ID: Final[str] = f"D{Drone._counter}"
         self.__where: Zone | Connection = None
+        self.__last_pos: Zone | Connection = None
         Drone._counter += 1
         self.speed = 1.0
         self.progress = 0.0
 
     def set_where(self, where: Zone | Connection | None) -> None:
+        self.__last_pos = self.__where
         self.__where = where
+        
+    def set_last_pos(self, where: Zone | Connection | None) -> None:
+        self.__last_pos = where
     
     def update_speed(self) -> None:
         where = self.get_where()
@@ -28,6 +33,9 @@ class Drone:
 
     def get_where(self) -> Zone | Connection:
         return self.__where
+    
+    def get_last_pos(self) -> Zone | Connection:
+        return self.__last_pos
     
     def get_coordinates(self) -> tuple[float, float]:
         where = self.get_where()

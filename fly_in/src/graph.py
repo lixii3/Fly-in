@@ -40,6 +40,7 @@ class Graph:
             d = Drone()
             self.__drones.append(d)
             d.set_where(self.__start)
+            d.set_last_pos(self.__start)
 
     ##### GETTERS #######
     def get_name(self) -> str:

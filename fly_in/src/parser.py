@@ -19,7 +19,7 @@ class ParsingException(Exception):
         super().__init__(self.fmsg, map_name, line)
 
     def __str__(self):
-        return self.fmsg
+        return "Parsing Exception: " + self.fmsg
 
 
 class MultipleParsingExceptions(Exception):

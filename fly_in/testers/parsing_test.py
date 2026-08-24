@@ -1,5 +1,6 @@
 from fly_in.src.parser import Parser, MultipleParsingExceptions, ParsingException
 import os
+import sys
 
 def test_cases(dir_path: str, verbose: bool = False):
     err_list: list[str] = []
@@ -20,6 +21,8 @@ def test_cases(dir_path: str, verbose: bool = False):
 
     if verbose:
         print(output)
+    else:
+        print("Pass the argument 'verbose', 'true' or '1' to view error details for each tested file")
     print("=+" * 20 + "SUMMARY" + "+=" * 20)
     ok = "[OK]"
     notok = "[ERROR]"
@@ -28,8 +31,12 @@ def test_cases(dir_path: str, verbose: bool = False):
 
 
 if __name__ == "__main__":
+    verbose = False
+    if len(sys.argv) == 2:
+        if sys.argv[1].lower() in ["verbose", "true", "1"]:
+            verbose = True
     dir_path = "fly_in/maps/test/files"
     try:
-        test_cases(dir_path, verbose=True)
+        test_cases(dir_path, verbose=verbose)
     except (OSError, MultipleParsingExceptions) as e:
         print(e)
