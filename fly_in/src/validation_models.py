@@ -1,4 +1,4 @@
-from fly_in.src.utils import ParsingTags, ParsingColors, ParsingZoneType
+from fly_in.src.utils import Tag, ParsingColors, ZoneType
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 from typing import List
@@ -6,8 +6,8 @@ from typing import List
 
 class MetaData(BaseModel):
 
-    tag: ParsingTags
-    z_type: ParsingZoneType | None = None
+    tag: Tag
+    z_type: ZoneType | None = None
     color: ParsingColors = ParsingColors.WHITE
     max_drones: int | None = Field(ge=0, default=None)
     max_link_capacity: int | None = Field(ge=0, default=None)
@@ -15,35 +15,35 @@ class MetaData(BaseModel):
 
     @model_validator(mode="after")
     def validator(self) -> Self:
-        if self.tag == ParsingTags.CONNECTION and not self.max_link_capacity:
+        if self.tag == Tag.CONNECTION and not self.max_link_capacity:
             self.max_link_capacity = 1
-        if not self.tag == ParsingTags.CONNECTION and self.max_link_capacity:
+        if not self.tag == Tag.CONNECTION and self.max_link_capacity:
             raise ValueError("hubs expect "
                              "'max_link_capacity' field to be None")
-        if (self.tag == ParsingTags.START_HUB or
-            self.tag == ParsingTags.END_HUB):
+        if (self.tag == Tag.START_HUB or
+            self.tag == Tag.END_HUB):
             if (self.max_drones and self.max_drones < self.nb_drones) or self.max_drones == 0:
                 raise ValueError("Max drone capacity is forbidden for hub of typ estart/end")
             # start e end devono essere normal
             if self.z_type is None:
-                self.z_type = ParsingZoneType.NORMAL
-            elif self.z_type != ParsingZoneType.NORMAL:
+                self.z_type = ZoneType.NORMAL
+            elif self.z_type != ZoneType.NORMAL:
                 raise ValueError("Start / end "
                                 "must be normal zones")
 
-        if self.tag == ParsingTags.CONNECTION and\
+        if self.tag == Tag.CONNECTION and\
                 (self.z_type or self.max_drones):
             raise ValueError("'connection' type_data expects "
                              "fields 'max_drones' and 'zone' to be None")
-        if self.z_type == ParsingZoneType.BLOCKED:
+        if self.z_type == ZoneType.BLOCKED:
             self.max_drones = 0
-        elif self.z_type == None and self.tag != ParsingTags.CONNECTION:
-            self.z_type = ParsingZoneType.NORMAL
+        elif self.z_type == None and self.tag != Tag.CONNECTION:
+            self.z_type = ZoneType.NORMAL
         return self
 
 
 class HubData(BaseModel):
-    tag: ParsingTags
+    tag: Tag
     name: str = Field(min_length=1)
     x: int = -1
     y: int = -1
@@ -52,26 +52,26 @@ class HubData(BaseModel):
     @model_validator(mode="after")
     def validator(self) -> Self:
         self.name = self.name.strip()
-        if self.tag == ParsingTags.CONNECTION:
+        if self.tag == Tag.CONNECTION:
             raise ValueError("Invalid value for tag")
         # se il nome contiene spazi o un dash
         elif ' ' in self.name or '-' in self.name:
             raise ValueError("Hub name can't contain spaces or dashes")
         if not self.metadata:
             max_d: int | None
-            if self.tag != ParsingTags.START_HUB and self.tag != ParsingTags.END_HUB:
+            if self.tag != Tag.START_HUB and self.tag != Tag.END_HUB:
                 max_d = 1
             else:
                 max_d = None
-            self.metadata = MetaData(tag=self.tag, z_type=ParsingZoneType.NORMAL, max_drones=max_d)
+            self.metadata = MetaData(tag=self.tag, z_type=ZoneType.NORMAL, max_drones=max_d)
         # se contiene metadata di tipo connection
-        elif self.metadata and self.metadata.tag == ParsingTags.CONNECTION:
+        elif self.metadata and self.metadata.tag == Tag.CONNECTION:
             raise ValueError(f"Invalid metadata for hub: '{self.name}'")
         return self
 
 
 class ConnectionData(BaseModel):
-    tag: ParsingTags = ParsingTags.CONNECTION
+    tag: Tag = Tag.CONNECTION
     name: str = Field(min_length=3)
     metadata: MetaData | None = None
     zoneA: str = ""
@@ -80,15 +80,15 @@ class ConnectionData(BaseModel):
     @model_validator(mode="after")
     def validator(self) -> Self:
         self.name = self.name.strip()
-        if not self.tag == ParsingTags.CONNECTION:
+        if not self.tag == Tag.CONNECTION:
             raise ValueError("Tag must be of type ParsingTags.CONNECTION")
         elif ' ' in self.name or self.name.count('-') != 1:
             raise ValueError("Connection name can't contain spaces "
                              "and must contain exactly one dash")
-        elif self.metadata and not self.metadata.tag == ParsingTags.CONNECTION:
+        elif self.metadata and not self.metadata.tag == Tag.CONNECTION:
             raise ValueError(f"Invalid metadata for connection: '{self.name}'")
         if not self.metadata:
-            self.metadata = MetaData(tag=ParsingTags.CONNECTION, max_link_capacity=1)
+            self.metadata = MetaData(tag=Tag.CONNECTION, max_link_capacity=1)
         self.zoneA = self.name.split('-')[0]
         self.zoneB = self.name.split('-')[1]
         if not self.zoneA or not self.zoneB or\
@@ -123,9 +123,9 @@ class MapData(BaseModel):
                 visti.add(l1)
 
         for h in self.hubs:
-            if h.tag == ParsingTags.START_HUB:
+            if h.tag == Tag.START_HUB:
                 has_start += 1
-            elif h.tag == ParsingTags.END_HUB:
+            elif h.tag == Tag.END_HUB:
                 has_end += 1
             # controllo che le hubs siano ben connesse
             if h.name not in connA and h.name not in connB:

@@ -1,5 +1,5 @@
 from fly_in.src.graph import Graph, GraphException
-from fly_in.src.utils import ParsingColors, ParsingTags, ParsingZoneType
+from fly_in.src.utils import ParsingColors, Tag, ZoneType
 from fly_in.src.validation_models import MetaData, ConnectionData, HubData, MapData
 from typing import List, Dict
 from pydantic import ValidationError
@@ -121,7 +121,7 @@ class Parser:
     def _parse_zone(row: str, nb_drones: int) -> ConnectionData | HubData:
         line: str = row.split("[")[0]
         data: ConnectionData | HubData
-        tag: ParsingTags
+        tag: Tag
         meta_line: str
         metadata: MetaData = None
         name: str = ""
@@ -130,7 +130,7 @@ class Parser:
 
         if ":" not in line:
             raise ParsingException(msg="Missing ':' after tag")
-        tag = ParsingTags.getTag(line.split(":")[0])
+        tag = Tag.getTag(line.split(":")[0])
         if tag is None:
             raise ParsingException(msg="Invalid tag")
 
@@ -138,14 +138,14 @@ class Parser:
         args = line.strip().split()
 
         # se e' una hub trovo x e y
-        if tag != ParsingTags.CONNECTION and len(args) == 3:
+        if tag != Tag.CONNECTION and len(args) == 3:
             name = args[0]
             try:
                 x = int(args[1])
                 y = int(args[2])
             except ValueError:
                 raise ParsingException(msg="Invalid non integers coordinates")
-        elif tag == ParsingTags.CONNECTION and len(args) == 1:
+        elif tag == Tag.CONNECTION and len(args) == 1:
             name = args[0]
         else:
             raise ParsingException(
@@ -164,7 +164,7 @@ class Parser:
                 raise ParsingException(msg="Invalid metadata format")
 
         try:
-            if tag != ParsingTags.CONNECTION:
+            if tag != Tag.CONNECTION:
                 data = HubData(tag=tag, name=name, x=x, y=y, metadata=metadata)
             else:
                 data = ConnectionData(tag=tag, name=name, metadata=metadata)
@@ -175,7 +175,7 @@ class Parser:
         return data
 
     @staticmethod
-    def _parse_metadata(row: str, tag: ParsingTags, nb_drones: int) -> MetaData:
+    def _parse_metadata(row: str, tag: Tag, nb_drones: int) -> MetaData:
         data: MetaData
         _tags: tuple = ("color", "zone", "max_drones", "max_link_capacity")
         meta_dict: Dict[str, str] = {}
@@ -199,7 +199,7 @@ class Parser:
             if key not in _tags or key in meta_dict:
                 raise ParsingException(msg="Invalid metadata")
             if key == "zone":
-                meta_dict[key] = ParsingZoneType.getZone(value)
+                meta_dict[key] = ZoneType.getZone(value)
                 if meta_dict[key] is None:
                     raise ParsingException(msg="Invalid zone value in metadata")
             elif key == "color":

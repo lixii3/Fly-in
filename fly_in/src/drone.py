@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Final, TYPE_CHECKING
-from fly_in.src.utils import ParsingTags
+from fly_in.src.utils import Tag
 
 if TYPE_CHECKING:
     from fly_in.src.zone import Zone
@@ -16,6 +16,7 @@ class Drone:
         Drone._counter += 1
         self.speed = 1.0
         self.progress = 0.0
+        self.path = []
 
     def set_where(self, where: Zone | Connection | None) -> None:
         self.__last_pos = self.__where
@@ -46,17 +47,20 @@ class Drone:
             return where.get_coordinates_at(self.progress)
             
         return (0.0, 0.0)
+    
+    def set_path(self, path: list[tuple[str, Zone | Connection, int]]) -> None:
+        self.path = path
 
     def at_end(self) -> bool:
         where = self.get_where()
         if where and type(where).__name__ == "Zone":
-            return where.get_type() == ParsingTags.END_HUB
+            return where.get_type() == Tag.END_HUB
         return False
     
     def at_start(self) -> bool:
         where = self.get_where()
         if where and type(where).__name__ == "Zone":
-            return where.get_type() == ParsingTags.START_HUB
+            return where.get_type() == Tag.START_HUB
         return False
 
     def update(self, base_step: float) -> None:

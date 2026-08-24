@@ -2,7 +2,7 @@ from __future__ import annotations
 from enum import Enum
 
 
-class ParsingTags(Enum):
+class Tag(Enum):
     START_HUB = "start_hub"
     END_HUB = "end_hub"
     HUB = "hub"
@@ -12,7 +12,7 @@ class ParsingTags(Enum):
     def getTag(cls, tag: str):
         return cls.__members__.get(tag.upper())
 
-class ParsingZoneType(Enum):
+class ZoneType(Enum):
     NORMAL = 1
     RESTRICTED = 2
     PRIORITY = 0.9999

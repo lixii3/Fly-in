@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fly_in.src.utils import ParsingZoneType, ParsingColors
+from fly_in.src.utils import ZoneType, ParsingColors
 from typing import Final, TYPE_CHECKING
 from fly_in.src.validation_models import HubData
 
@@ -26,6 +26,7 @@ class Zone:
         self.__cost = self.__type.value
         self.__color = data.metadata.color
         self.MAX_DRONES: Final[int | None] = data.metadata.max_drones
+        self.__reservations: dict[int, int] = {}
 
     ##### GETTERS #######
     def get_name(self) -> str:
@@ -40,7 +41,7 @@ class Zone:
     def get_cost(self) -> int:
         return self.__cost
     
-    def get_type(self) -> ParsingZoneType:
+    def get_type(self) -> ZoneType:
         return self.__type
 
     def get_color(self) -> ParsingColors:
@@ -68,3 +69,15 @@ class Zone:
         if self.MAX_DRONES:
             return self.MAX_DRONES - len(self.__drones_in)
         return -1
+
+    def space_left_at(self, turn: int) -> int:
+        if self.get_type() in (ZoneType.START_HUB, ZoneType.END_HUB):
+            return 999999
+        
+        reserved = self.__reservations.get(turn, 0)
+        return self.MAX_DRONES - reserved
+
+    def reserve(self, turn: int) -> None:
+        if self.space_left_at(turn) <= 0:
+            raise Exception(f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}")
+        self.__reservations[turn] = self.__reservations.get(turn, 0) + 1

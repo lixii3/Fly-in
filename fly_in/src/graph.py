@@ -1,7 +1,8 @@
+from typing import Optional, Tuple, List
 from __future__ import annotations
 from fly_in.src.validation_models import MapData
-from fly_in.src.utils import ParsingTags
-from typing import List, overload
+from fly_in.src.utils import Tag
+from typing import List
 from fly_in.src.connection import Connection, ConnectionException
 from fly_in.src.zone import Zone
 from fly_in.src.drone import Drone
@@ -26,9 +27,9 @@ class Graph:
 
         for h in data.hubs:
             z = Zone(h)
-            if h.tag == ParsingTags.START_HUB:
+            if h.tag == Tag.START_HUB:
                 self.__start = z
-            elif h.tag == ParsingTags.END_HUB:
+            elif h.tag == Tag.END_HUB:
                 self.__end = z
             self.__zones.append(z)
         for c in data.connections:
@@ -131,20 +132,73 @@ class Graph:
                 links.append(c)
         return links
 
-    def get_min_cost_path(self):
-        stack: list[Zone] = []
-        visited: list[Zone] = []
-        curr: Zone
-        links: list[Connection]
-        stack.append(self.__start)
-        while len(stack) > 0:
-            curr = stack[-1]
-            visited.append(curr)
-            links = self.get_connections(curr)
-            # rimuovo conns tra zone gia visitate
-            for l in links:
-                if l.get_zoneA() in visited and l.get_zoneB in visited:
-                    links.remove(l)
+    def get_min_cost_path(self, start_zone: Zone, end_zone: Zone, start_turn: int = 0) -> Optional[List[Tuple[str, object, int]]]:
+        import heapq
+        
+        queue = []
+        current_zone: Zone
+        current_turn: int
+        path: List[Tuple[str, object, int]]
+        heapq.heappush(queue, (start_turn, start_turn, start_zone.get_name(), start_zone, []))
+        
+        visited: set[tuple[str, int]] = set()
+        
+        while queue:
+            cost, current_turn, _, current_zone, path = heapq.heappop(queue)
+            
+            if current_zone == end_zone:
+                return path
+                
+            state = (current_zone.get_name(), current_turn)
+            if state in visited:
+                continue
+            visited.add(state)
+            
+            # se il drone atende un turno
+            if current_zone.space_left_at(current_turn + 1) > 0:
+                heapq.heappush(queue, (
+                    cost + 1, 
+                    current_turn + 1, 
+                    current_zone.get_name(), 
+                    current_zone, 
+                    path + [("WAIT", current_zone, current_turn + 1)]
+                ))
+                
+            # se il drone si muove
+            for conn in self.get_links(current_zone):
+                # Trova il vicino
+                neighbor = conn.get_zoneA() if conn.get_zoneB() == current_zone else conn.get_zoneB()
+                
+                if neighbor.get_type().name == "BLOCKED": 
+                    continue
+                    
+                move_cost = neighbor.get_cost() # Ritorna 1 o 2
+                
+                if move_cost == 1:
+                    # la zona deve essere liberata se richeide 1 turno solo
+                    if neighbor.space_left_at(current_turn + 1) > 0:
+                        heapq.heappush(queue, (
+                            cost + 1,
+                            current_turn + 1,
+                            neighbor.get_name(),
+                            neighbor,
+                            path + [("MOVE", neighbor, current_turn + 1)]
+                        ))
+                
+                elif move_cost == 2:
+                    # Zona RESTRICTED 
+                    # La connessione deve essere libera al turno T+1
+                    # La zona di destinazione deve essere libera al turno T+2
+                    if conn.space_left_at(current_turn + 1) > 0 and neighbor.space_left_at(current_turn + 2) > 0:
+                        heapq.heappush(queue, (
+                            cost + 2,
+                            current_turn + 2,
+                            neighbor.get_name(),
+                            neighbor,
+                            path + [("TRANSIT", conn, current_turn + 1), ("MOVE", neighbor, current_turn + 2)]
+                        ))
+                        
+        return None
             
 
  

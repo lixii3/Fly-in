@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fly_in.src.validation_models import ParsingColors, ParsingTags
+from fly_in.src.validation_models import ParsingColors, Tag
 from fly_in.src.validation_models import ConnectionData, MetaData
 from typing import Final, Iterable, TYPE_CHECKING, overload
 from pydantic import ValidationError
@@ -14,7 +14,7 @@ class ConnectionException(Exception):
         super().__init__(msg)
 
     def __str__(self):
-        return self.msg
+        return "ConnectionException: " + self.msg
 
 
 class Connection:
@@ -23,7 +23,7 @@ class Connection:
                  color: str, max_link_capacity: int = 1) -> None:
         try:
             metadata: MetaData = MetaData(
-                tag=ParsingTags.CONNECTION,
+                tag=Tag.CONNECTION,
                 color=ParsingColors.getColor(color),
                 max_link_capacity=max_link_capacity,
             )
@@ -38,6 +38,7 @@ class Connection:
         self.__color = data.metadata.color
         self.MAX_LINK_CAPACITY: Final[int] = data.metadata.max_link_capacity
         self.__drones_in: list[Drone]
+        self.__reservations: dict[int, int] = {}
 
         __tmparch: list[Zone] = []
         for z in zones:
@@ -88,6 +89,16 @@ class Connection:
     
     def space_left(self) -> int:
         return self.MAX_LINK_CAPACITY - len(self.__drones_in)
+    
+    def space_left_at(self, turn: int) -> int:
+        # Sottrai i droni già prenotati per quel turno specifico
+        reserved = self.__reservations.get(turn, 0)
+        return self.MAX_LINK_CAPACITY - reserved
+
+    def reserve(self, turn: int) -> None:
+        if self.space_left_at(turn) <= 0:
+            raise ConnectionException(f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}")
+        self.__reservations[turn] = self.__reservations.get(turn, 0) + 1
 
     def drone_in(self, drone: Drone) -> None:
         if not self.space_left():
