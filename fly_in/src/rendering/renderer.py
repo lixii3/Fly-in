@@ -173,7 +173,6 @@ class Renderer:
             global _curr_path
             _curr_path = os.path.join(_curr_path, _clicked + ".txt")
             titles  = ["back"]
-            print(titles)
             start_y = self.SCREEN.get_height() // 10 * 9 # posizione ad un quarto dalla fine dello schermo
             self.create_btns(titles, _button, start_y)
             if not self.__graph:

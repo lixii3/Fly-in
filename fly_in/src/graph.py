@@ -1,7 +1,7 @@
-from typing import Optional, Tuple, List
 from __future__ import annotations
+from typing import Optional, Tuple, List
 from fly_in.src.validation_models import MapData
-from fly_in.src.utils import Tag
+from fly_in.src.utils import Tag, Action
 from typing import List
 from fly_in.src.connection import Connection, ConnectionException
 from fly_in.src.zone import Zone
@@ -132,19 +132,23 @@ class Graph:
                 links.append(c)
         return links
 
-    def get_min_cost_path(self, start_zone: Zone, end_zone: Zone, start_turn: int = 0) -> Optional[List[Tuple[str, object, int]]]:
+    def get_min_cost_path(self, start_zone: Zone,
+                          end_zone: Zone,
+                          start_turn: int = 0) -> Optional[List[Tuple[Action, object, int]]]:
         import heapq
         
         queue = []
         current_zone: Zone
         current_turn: int
-        path: List[Tuple[str, object, int]]
+        path: List[Tuple[Action, object, int]] = []
         heapq.heappush(queue, (start_turn, start_turn, start_zone.get_name(), start_zone, []))
         
         visited: set[tuple[str, int]] = set()
         
         while queue:
             cost, current_turn, _, current_zone, path = heapq.heappop(queue)
+            print("=" * 20 + f"turn: {current_turn}\npath: {path}")
+            
             
             if current_zone == end_zone:
                 return path
@@ -155,13 +159,14 @@ class Graph:
             visited.add(state)
             
             # se il drone atende un turno
+            print(f"space left on next turn on zone {current_zone.get_name()}: {current_zone.space_left_at(current_turn + 1)}")
             if current_zone.space_left_at(current_turn + 1) > 0:
                 heapq.heappush(queue, (
                     cost + 1, 
                     current_turn + 1, 
                     current_zone.get_name(), 
                     current_zone, 
-                    path + [("WAIT", current_zone, current_turn + 1)]
+                    path.append([(Action.WAIT, current_zone, current_turn + 1)])
                 ))
                 
             # se il drone si muove
@@ -182,20 +187,23 @@ class Graph:
                             current_turn + 1,
                             neighbor.get_name(),
                             neighbor,
-                            path + [("MOVE", neighbor, current_turn + 1)]
+                            path.append([(Action.MOVE, neighbor,
+                                          current_turn + 1)])
                         ))
                 
                 elif move_cost == 2:
                     # Zona RESTRICTED 
                     # La connessione deve essere libera al turno T+1
                     # La zona di destinazione deve essere libera al turno T+2
-                    if conn.space_left_at(current_turn + 1) > 0 and neighbor.space_left_at(current_turn + 2) > 0:
+                    if conn.space_left_at(current_turn + 1) > 0 and\
+                        neighbor.space_left_at(current_turn + 2) > 0:
                         heapq.heappush(queue, (
                             cost + 2,
                             current_turn + 2,
                             neighbor.get_name(),
                             neighbor,
-                            path + [("TRANSIT", conn, current_turn + 1), ("MOVE", neighbor, current_turn + 2)]
+                            path.append([(Action.TRANSIT, conn, current_turn + 1),
+                                         (Action.MOVE, neighbor, current_turn + 2)])
                         ))
                         
         return None

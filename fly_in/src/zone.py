@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fly_in.src.utils import ZoneType, ParsingColors
+from fly_in.src.utils import ZoneType, ParsingColors, Tag
 from typing import Final, TYPE_CHECKING
 from fly_in.src.validation_models import HubData
 
@@ -25,7 +25,9 @@ class Zone:
         self.__type = data.metadata.z_type
         self.__cost = self.__type.value
         self.__color = data.metadata.color
-        self.MAX_DRONES: Final[int | None] = data.metadata.max_drones
+        
+        max_d = data.metadata.max_drones
+        self.MAX_DRONES: Final[int] = max_d if not max_d == None else 1
         self.__reservations: dict[int, int] = {}
 
     ##### GETTERS #######
@@ -71,7 +73,7 @@ class Zone:
         return -1
 
     def space_left_at(self, turn: int) -> int:
-        if self.get_type() in (ZoneType.START_HUB, ZoneType.END_HUB):
+        if self.get_type() in (Tag.START_HUB, Tag.END_HUB):
             return 999999
         
         reserved = self.__reservations.get(turn, 0)

@@ -59,3 +59,10 @@ class Mode(Enum):
     @classmethod
     def get(cls, mode: str):
         return cls.__members__.get(mode.upper(), Mode.NONE)
+    
+    
+class Action(Enum):
+    MOVE = "MOVE"
+    TRANSIT = "TRANSIT"
+    WAIT = "WAIT"
+    NONE = "NONE"

@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import Final, TYPE_CHECKING
-from fly_in.src.utils import Tag
+from fly_in.src.utils import Tag, Action
 
 if TYPE_CHECKING:
     from fly_in.src.zone import Zone
@@ -16,7 +16,7 @@ class Drone:
         Drone._counter += 1
         self.speed = 1.0
         self.progress = 0.0
-        self.path = []
+        self.path: list[tuple[Action, Zone | Connection, int]]= []
 
     def set_where(self, where: Zone | Connection | None) -> None:
         self.__last_pos = self.__where
@@ -48,7 +48,13 @@ class Drone:
             
         return (0.0, 0.0)
     
-    def set_path(self, path: list[tuple[str, Zone | Connection, int]]) -> None:
+    def get_action_at_turn(self, turn: int) -> tuple[Action, Zone | Connection, int]:
+        for a, r, t in self.path:
+            if t == turn:
+                return (a, r, t)
+        return (Action.NONE, None, 0)
+            
+    def set_path(self, path: list[tuple[Action, Zone | Connection, int]]) -> None:
         self.path = path
 
     def at_end(self) -> bool:
