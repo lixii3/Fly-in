@@ -136,78 +136,75 @@ class Graph:
                           end_zone: Zone,
                           start_turn: int = 0) -> Optional[List[Tuple[Action, object, int]]]:
         import heapq
-        
-        queue = []
-        current_zone: Zone
-        current_turn: int
-        path: List[Tuple[Action, object, int]] = []
-        heapq.heappush(queue, (start_turn, start_turn, start_zone.get_name(), start_zone, []))
-        
+
+        queue: List[Tuple[int, int, str, Zone, List[Tuple[Action, Zone | Connection, int]]]] = []
+        counter = 0
+        heapq.heappush(queue, (start_turn, counter, start_zone.get_name(), start_zone, []))
+
         visited: set[tuple[str, int]] = set()
-        
+
         while queue:
-            cost, current_turn, _, current_zone, path = heapq.heappop(queue)
-            print("=" * 20 + f"turn: {current_turn}\npath: {path}")
-            
-            
+            _, _, _, current_zone, path = heapq.heappop(queue)
+            current_turn = 0
+            if path:
+                current_turn = max(step[2] for step in path)
+
             if current_zone == end_zone:
                 return path
-                
+
             state = (current_zone.get_name(), current_turn)
             if state in visited:
                 continue
             visited.add(state)
-            
-            # se il drone atende un turno
-            print(f"space left on next turn on zone {current_zone.get_name()}: {current_zone.space_left_at(current_turn + 1)}")
-            if current_zone.space_left_at(current_turn + 1) > 0:
-                heapq.heappush(queue, (
-                    cost + 1, 
-                    current_turn + 1, 
-                    current_zone.get_name(), 
-                    current_zone, 
-                    path.append([(Action.WAIT, current_zone, current_turn + 1)])
-                ))
-                
-            # se il drone si muove
-            for conn in self.get_links(current_zone):
-                # Trova il vicino
-                neighbor = conn.get_zoneA() if conn.get_zoneB() == current_zone else conn.get_zoneB()
-                
-                if neighbor.get_type().name == "BLOCKED": 
-                    continue
-                    
-                move_cost = neighbor.get_cost() # Ritorna 1 o 2
-                
-                if move_cost == 1:
-                    # la zona deve essere liberata se richeide 1 turno solo
-                    if neighbor.space_left_at(current_turn + 1) > 0:
-                        heapq.heappush(queue, (
-                            cost + 1,
-                            current_turn + 1,
-                            neighbor.get_name(),
-                            neighbor,
-                            path.append([(Action.MOVE, neighbor,
-                                          current_turn + 1)])
-                        ))
-                
-                elif move_cost == 2:
-                    # Zona RESTRICTED 
-                    # La connessione deve essere libera al turno T+1
-                    # La zona di destinazione deve essere libera al turno T+2
-                    if conn.space_left_at(current_turn + 1) > 0 and\
-                        neighbor.space_left_at(current_turn + 2) > 0:
-                        heapq.heappush(queue, (
-                            cost + 2,
-                            current_turn + 2,
-                            neighbor.get_name(),
-                            neighbor,
-                            path.append([(Action.TRANSIT, conn, current_turn + 1),
-                                         (Action.MOVE, neighbor, current_turn + 2)])
-                        ))
-                        
-        return None
-            
 
- 
-            
+            if current_zone.space_left_at(current_turn + 1) > 0:
+                next_path = path + [(Action.WAIT, current_zone, current_turn + 1)]
+                counter += 1
+                heapq.heappush(queue, (
+                    current_turn + 1,
+                    counter,
+                    current_zone.get_name(),
+                    current_zone,
+                    next_path,
+                ))
+
+            for conn in self.get_links(current_zone):
+                neighbor = conn.get_zoneA() if conn.get_zoneB() == current_zone else conn.get_zoneB()
+
+                if neighbor.get_type().name == "BLOCKED":
+                    continue
+
+                move_cost = neighbor.get_cost()
+
+                if move_cost == 1:
+                    if neighbor.space_left_at(current_turn + 1) > 0:
+                        next_path = path + [(Action.MOVE, neighbor, current_turn + 1)]
+                        counter += 1
+                        heapq.heappush(queue, (
+                            current_turn + 1,
+                            counter,
+                            neighbor.get_name(),
+                            neighbor,
+                            next_path,
+                        ))
+
+                elif move_cost == 2:
+                    if conn.space_left_at(current_turn + 1) > 0 and neighbor.space_left_at(current_turn + 2) > 0:
+                        next_path = path + [
+                            (Action.TRANSIT, conn, current_turn + 1),
+                            (Action.MOVE, neighbor, current_turn + 2),
+                        ]
+                        counter += 1
+                        heapq.heappush(queue, (
+                            current_turn + 2,
+                            counter,
+                            neighbor.get_name(),
+                            neighbor,
+                            next_path,
+                        ))
+
+        return None
+
+
+
+
