@@ -132,22 +132,25 @@ class Graph:
                 links.append(c)
         return links
 
+    @staticmethod
+    def manhattan_distance(zoneA: Zone, zoneB: Zone) -> int:
+        return abs(zoneA.get_x() - zoneB.get_x()) + abs(zoneA.get_y() - zoneB.get_y())
+    
     def get_min_cost_path(self, start_zone: Zone,
                           end_zone: Zone,
-                          start_turn: int = 0) -> Optional[List[Tuple[Action, object, int]]]:
+                          start_turn: int = 0) -> Optional[List[Tuple[Action, Zone | Connection, int]]]:
         import heapq
 
-        queue: List[Tuple[int, int, str, Zone, List[Tuple[Action, Zone | Connection, int]]]] = []
+        queue: List[Tuple[float, int, int, float, str, Zone, Tuple[Action, Zone | Connection, int]] ]= []
         counter = 0
-        heapq.heappush(queue, (start_turn, counter, start_zone.get_name(), start_zone, []))
+
+        start_h = float(self.manhattan_distance(start_zone, end_zone))
+        heapq.heappush(queue, (start_h, counter, start_turn, 0.0, start_zone.get_name(), start_zone, []))
 
         visited: set[tuple[str, int]] = set()
 
         while queue:
-            _, _, _, current_zone, path = heapq.heappop(queue)
-            current_turn = 0
-            if path:
-                current_turn = max(step[2] for step in path)
+            f_cost, _, current_turn, g_cost, _, current_zone, path = heapq.heappop(queue)
 
             if current_zone == end_zone:
                 return path
@@ -157,12 +160,15 @@ class Graph:
                 continue
             visited.add(state)
 
+            # OPZIONE 1: WAIT
             if current_zone.space_left_at(current_turn + 1) > 0:
                 next_path = path + [(Action.WAIT, current_zone, current_turn + 1)]
                 counter += 1
                 heapq.heappush(queue, (
-                    current_turn + 1,
+                    f_cost + 1.0,        
                     counter,
+                    current_turn + 1,    # Il turno + 1
+                    g_cost + 1.0,        # Il costo + 1
                     current_zone.get_name(),
                     current_zone,
                     next_path,
@@ -174,37 +180,53 @@ class Graph:
                 if neighbor.get_type().name == "BLOCKED":
                     continue
 
-                move_cost = neighbor.get_cost()
+                move_cost = float(neighbor.get_cost()) # Può essere 1.0, 2.0 o 0.9999
 
-                if move_cost == 1:
+                # OPZIONE 2: MOVE (zone normal e priority)
+                if move_cost <= 1.0:
                     if neighbor.space_left_at(current_turn + 1) > 0:
                         next_path = path + [(Action.MOVE, neighbor, current_turn + 1)]
                         counter += 1
+                        new_turn = current_turn + 1 
+                        new_g_cost = g_cost + move_cost  
+                        
+                        h_cost = float(self.manhattan_distance(neighbor, end_zone))
+                        new_f_cost = new_g_cost + h_cost
+
                         heapq.heappush(queue, (
-                            current_turn + 1,
+                            new_f_cost,
                             counter,
+                            new_turn,    
+                            new_g_cost,
                             neighbor.get_name(),
                             neighbor,
                             next_path,
                         ))
 
-                elif move_cost == 2:
+                # OPZIONE 3: TRANSIT (zone restricted)
+                elif move_cost == 2.0:
                     if conn.space_left_at(current_turn + 1) > 0 and neighbor.space_left_at(current_turn + 2) > 0:
                         next_path = path + [
                             (Action.TRANSIT, conn, current_turn + 1),
                             (Action.MOVE, neighbor, current_turn + 2),
                         ]
                         counter += 1
+                        
+                        # Movimento lungo 2 turni interi
+                        new_turn = current_turn + 2
+                        new_g_cost = g_cost + 2.0
+                        
+                        h_cost = float(self.manhattan_distance(neighbor, end_zone))
+                        new_f_cost = new_g_cost + h_cost
+
                         heapq.heappush(queue, (
-                            current_turn + 2,
+                            new_f_cost,
                             counter,
+                            new_turn,
+                            new_g_cost,
                             neighbor.get_name(),
                             neighbor,
                             next_path,
                         ))
 
         return None
-
-
-
-

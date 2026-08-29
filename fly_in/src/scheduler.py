@@ -31,46 +31,49 @@ class Scheduler:
                 for _, resource, turn in path:
                     resource.reserve(turn)
             else:
-                print(f"Errore: nessun percorso trovato per {drone.ID}")
+                raise SchedulerException(f"Errore: nessun percorso trovato per {drone.ID}")
     
         self.__generate_output_file()
         
     
     def __generate_output_file(self, filename: str = "output.txt") -> None:
         curr_turn = 1
-        all_arrived = all(d.at_end() for d in self.__graph.get_drones())
         dest: Zone | Connection
         action: Action
         output: list[str] = []
-        while not all_arrived:
+        all_done: bool
+        while True:
             turn_moves = []
+            all_done = True
             for d in self.__graph.get_drones():
                 if d.at_end():
                     continue
                 action = d.get_action_at_turn(curr_turn)
-                if action == Action.NONE:
+                if action[0] != Action.NONE:
+                    all_done = False
+                    
+                if action[0] == Action.NONE or action[0] == Action.WAIT:
                     continue
-                dest = action[1]
-                if action == Action.MOVE or action == Action.TRANSIT:
+                if action[0] == Action.MOVE or action[0] == Action.TRANSIT:
+                    dest = action[1]
                     movement = f"D{d.ID}-{dest.get_name()}"
                     turn_moves.append(movement)
-            all_arrived = all(d.at_end() for d in self.__graph.get_drones())
+            if all_done:
+                break
             if len(turn_moves) > 0:
-                line = str.join(turn_moves, " ")
-                output[curr_turn] = line
-                turn_moves.clear()
+                line = " ".join(turn_moves)
+                output.append(line + "\n")
             curr_turn += 1
-
         try:
-            with open(filename, "w+") as file:
-                for l in output:
-                    file.write(l + "\n")
+            with open(filename, "w") as file:
+                file.writelines(output)
         except OSError as e:
             raise SchedulerException(str(e[0]))
                     
-                
 if __name__ == "__main__":
     from fly_in.src.parser import Parser
-    g = Parser.parse_map("fly_in/maps/easy/01_linear_path.txt")
+    dir_path = "fly_in/maps/hard/01_maze_nightmare.txt"
+    
+    g = Parser.parse_map(dir_path)
     s = Scheduler(g)
     s.schedule()
