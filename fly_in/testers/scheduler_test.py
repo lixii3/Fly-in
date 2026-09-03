@@ -11,6 +11,9 @@ def test(verbose):
     output: str = ""
     try:
         file_list = [f for f in os.listdir(dir_path) if f.endswith('.txt')]
+        # svuota file
+        with open(outputfile, "w") as f:
+            pass
     except OSError as e:
         raise e
     for filename in file_list:
@@ -25,7 +28,7 @@ def test(verbose):
 
             with open(outputfile, 'a') as destinazione:
                 destinazione.write("\n" + "=" * 35 +
-                                   f"\n{filename}" +
+                                   f"{filename}" +
                                    "=" * 35)
                 destinazione.write(f"\n{testo}")
         except (ParsingException, MultipleParsingExceptions, OSError, SchedulerException) as e:
