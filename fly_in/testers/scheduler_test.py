@@ -4,7 +4,7 @@ import os
 import sys
 
 outputfile = "test_output.txt"
-dir_path = "fly_in/maps/easy"
+dir_path = "fly_in/maps/hard"
 
 def test(verbose):
     err_list: list[str] = []

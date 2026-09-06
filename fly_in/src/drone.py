@@ -1,9 +1,9 @@
 from __future__ import annotations
 from typing import Final, TYPE_CHECKING
 from fly_in.src.utils import Tag, Action
+from fly_in.src.zone import Zone
 
 if TYPE_CHECKING:
-    from fly_in.src.zone import Zone
     from fly_in.src.connection import Connection
 
 class Drone:
@@ -29,8 +29,8 @@ class Drone:
         where = self.get_where()
         self.speed = 1.0
         
-        if where and type(where).__name__ == "Zone":
-            self.speed /= float(where.get_type().value())
+        if where and isinstance(where, Zone):
+            self.speed /= float(where.get_type().value)
 
     def get_where(self) -> Zone | Connection:
         return self.__where
@@ -87,3 +87,7 @@ class Drone:
                 
                 # Aggiorniamo la velocità in base al nuovo nodo raggiunto
                 self.update_speed()
+    
+    @classmethod
+    def zeroCounter(cls) -> None:
+        cls._counter = 0

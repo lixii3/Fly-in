@@ -1,6 +1,51 @@
 
-===================================01_linear_path.txt===================================
-DD8-waypoint1
-DD8-waypoint2 DD9-waypoint1
-DD8-goal DD9-waypoint2
-DD9-goal
+===================================01_maze_nightmare.txt===================================
+DD0-maze_a1 DD1-maze_a1 DD4-dead_end1 DD5-dead_end1
+DD0-maze_a2 DD1-maze_b1 DD2-maze_a1 DD3-maze_a1 DD4-start DD5-start DD6-dead_end1 DD7-dead_end1
+DD0-maze_c2 DD1-maze_b2 DD2-maze_a2 DD3-maze_b1 DD4-maze_a1 DD5-maze_a1 DD6-start DD7-start
+DD0-bottleneck DD1-maze_c2 DD2-maze_c2 DD3-maze_b2 DD4-maze_a2 DD5-maze_b1 DD6-maze_a1 DD7-maze_a1
+DD0-final_stretch2 DD1-bottleneck DD2-bottleneck DD3-maze_c2 DD4-maze_c2 DD5-maze_b2 DD6-maze_a2 DD7-maze_b1
+DD0-goal DD1-final_stretch2 DD2-final_stretch1 DD3-bottleneck DD4-bottleneck DD5-maze_c2 DD6-maze_c2 DD7-maze_b2
+DD1-goal DD2-goal DD3-final_stretch2 DD4-final_stretch1 DD5-bottleneck DD6-bottleneck DD7-maze_c2
+DD3-goal DD4-goal DD5-final_stretch2 DD6-final_stretch1 DD7-bottleneck
+DD5-goal DD6-goal DD7-final_stretch2
+DD7-goal
+
+===================================02_capacity_hell.txt===================================
+DD0-gate3 DD1-gate2 DD3-gate1
+DD0-waiting_area3 DD1-waiting_area2 DD2-gate3 DD3-waiting_area1 DD4-gate2 DD6-gate1
+DD0-convergence DD1-priority_bypass2 DD2-waiting_area3 DD3-priority_bypass1 DD4-waiting_area2 DD5-gate3 DD6-waiting_area1 DD7-gate2 DD9-gate1
+DD0-final_bottleneck DD1-convergence DD2-convergence DD3-priority_bypass2 DD4-priority_bypass2 DD5-waiting_area3 DD6-priority_bypass1 DD7-waiting_area2 DD8-gate3 DD9-waiting_area1 DD10-gate2
+DD0-goal DD1-final_bottleneck DD2-final_bottleneck DD3-convergence DD4-convergence DD5-convergence DD6-priority_bypass2 DD7-priority_bypass2 DD8-waiting_area3 DD9-priority_bypass1 DD10-waiting_area2 DD11-gate3
+DD1-goal DD2-goal DD3-final_bottleneck DD4-final_bottleneck DD5-final_bottleneck DD6-convergence DD7-convergence DD8-convergence DD9-priority_bypass2 DD10-priority_bypass2 DD11-waiting_area3
+DD3-goal DD4-goal DD5-goal DD6-final_bottleneck DD7-final_bottleneck DD8-final_bottleneck DD9-convergence DD10-convergence DD11-convergence
+DD6-goal DD7-goal DD8-goal DD9-final_bottleneck DD10-final_bottleneck DD11-final_bottleneck
+DD9-goal DD10-goal DD11-goal
+
+===================================03_ultimate_challenge.txt===================================
+DD0-dist_gate1 DD2-dist_gate3
+DD0-maze_correct DD1-dist_gate1 DD2-maze_loop1 DD4-dist_gate3
+DD0-bottleneck1 DD1-maze_correct DD2-maze_loop2 DD3-dist_gate1 DD4-maze_loop1 DD5-dist_gate3
+DD0-bottleneck2 DD1-bottleneck1 DD2-maze_correct DD3-maze_correct DD4-maze_loop2 DD5-maze_loop1 DD6-dist_gate1 DD7-dist_gate3
+DD0-priority_hub DD1-bottleneck2 DD2-bottleneck1 DD3-bottleneck1 DD4-maze_correct DD5-maze_loop2 DD6-maze_correct DD7-maze_loop1 DD8-dist_gate1 DD9-dist_gate3
+DD0-conv_priority1 DD1-priority_hub DD2-bottleneck2 DD4-bottleneck1 DD5-maze_correct DD7-maze_loop2 DD8-maze_correct DD9-maze_loop1 DD10-dist_gate1 DD11-dist_gate3
+DD0-conv_priority2 DD1-conv_priority1 DD2-priority_hub DD3-bottleneck2 DD5-bottleneck1 DD9-maze_loop2 DD10-maze_correct DD11-maze_loop1 DD12-dist_gate1 DD13-dist_gate3
+DD0-final_merge DD1-conv_priority2 DD2-conv_priority1 DD3-priority_hub DD4-bottleneck2 DD6-bottleneck1 DD7-maze_correct DD9-maze_loop3 DD10-maze_loop2 DD11-maze_loop2 DD12-maze_correct DD13-maze_loop1 DD14-dist_gate1
+DD0-final_gate1 DD1-final_merge DD2-conv_priority2 DD3-conv_priority1 DD4-priority_hub DD5-bottleneck2 DD7-bottleneck1 DD9-maze_loop2 DD10-maze_loop3 DD11-maze_loop3 DD12-maze_loop2 DD13-maze_loop2 DD14-maze_correct
+DD0-final_gate2 DD1-final_gate1 DD2-final_merge DD3-conv_priority2 DD4-conv_priority1 DD5-priority_hub DD6-bottleneck2 DD8-bottleneck1 DD9-maze_correct DD10-maze_loop2 DD12-maze_loop3 DD13-maze_loop3 DD14-maze_loop2
+DD0-final_gate3 DD1-final_gate2 DD2-final_gate1 DD3-final_merge DD4-conv_priority2 DD5-conv_priority1 DD6-priority_hub DD7-bottleneck2 DD9-bottleneck1 DD10-maze_correct DD11-maze_loop2 DD14-maze_loop3
+DD0-goal DD1-final_gate3 DD2-final_gate2 DD3-final_gate1 DD4-final_merge DD5-conv_priority2 DD6-conv_priority1 DD7-priority_hub DD8-bottleneck2 DD10-bottleneck1 DD11-maze_correct DD12-maze_loop2
+DD1-goal DD2-final_gate3 DD3-final_gate2 DD4-final_gate1 DD5-final_merge DD6-conv_priority2 DD7-conv_priority1 DD8-priority_hub DD9-bottleneck2 DD11-bottleneck1 DD12-maze_correct DD13-maze_loop2
+DD2-goal DD3-final_gate3 DD4-final_gate2 DD5-final_gate1 DD6-final_merge DD7-conv_priority2 DD8-conv_priority1 DD9-priority_hub DD10-bottleneck2 DD12-bottleneck1 DD13-maze_correct DD14-maze_loop2
+DD3-goal DD4-final_gate3 DD5-final_gate2 DD6-final_gate1 DD7-final_merge DD8-conv_priority2 DD9-conv_priority1 DD10-priority_hub DD11-bottleneck2 DD13-bottleneck1 DD14-maze_correct
+DD4-goal DD5-final_gate3 DD6-final_gate2 DD7-final_gate1 DD8-final_merge DD9-conv_priority2 DD10-conv_priority1 DD11-priority_hub DD12-bottleneck2 DD14-bottleneck1
+DD5-goal DD6-final_gate3 DD7-final_gate2 DD8-final_gate1 DD9-final_merge DD10-conv_priority2 DD11-conv_priority1 DD12-priority_hub DD13-bottleneck2
+DD6-goal DD7-final_gate3 DD8-final_gate2 DD9-final_gate1 DD10-final_merge DD11-conv_priority2 DD12-conv_priority1 DD13-priority_hub DD14-bottleneck2
+DD7-goal DD8-final_gate3 DD9-final_gate2 DD10-final_gate1 DD11-final_merge DD12-conv_priority2 DD13-conv_priority1 DD14-priority_hub
+DD8-goal DD9-final_gate3 DD10-final_gate2 DD11-final_gate1 DD12-final_merge DD13-conv_priority2 DD14-conv_priority1
+DD9-goal DD10-final_gate3 DD11-final_gate2 DD12-final_gate1 DD13-final_merge DD14-conv_priority2
+DD10-goal DD11-final_gate3 DD12-final_gate2 DD13-final_gate1 DD14-final_merge
+DD11-goal DD12-final_gate3 DD13-final_gate2 DD14-final_gate1
+DD12-goal DD13-final_gate3 DD14-final_gate2
+DD13-goal DD14-final_gate3
+DD14-goal

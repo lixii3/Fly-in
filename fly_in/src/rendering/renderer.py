@@ -2,11 +2,13 @@ from __future__ import annotations
 from fly_in.src.rendering.pngButton import PNGButton
 from copy import deepcopy
 from fly_in.src.rendering.utils import calcola_trasformazione
+from fly_in.src.utils import Tag, ZoneType
 from fly_in.src.connection import Connection
 from fly_in.src.graph import Graph
 from fly_in.src.zone import Zone
 from fly_in.src.drone import Drone
-from fly_in.src.utils import Mode
+from fly_in.src.utils import Mode, FlyInException
+from fly_in.src.scheduler import Scheduler, SchedulerException
 from fly_in.src.parser import Parser, ParsingException, MultipleParsingExceptions
 import os
 import pygame as pg
@@ -41,7 +43,8 @@ class Renderer:
         self.buttons: dict[str, PNGButton] = {}
         self.sprites: dict[str, pg.Surface] = {}
         self.__graph: Graph
-        self.__dr: Renderer.DroneRenderer = Renderer.DroneRenderer("fly_in/src/rendering/resources/sprites/drone.png")
+        self.__dr: DroneRenderer = DroneRenderer("fly_in/src/rendering/resources/sprites/drone.png")
+        self.__scheduler: Scheduler
         self._load_resources()
 
     def _load_resources(self) -> None:
@@ -60,27 +63,30 @@ class Renderer:
         # Backgrounds
         if os.path.exists(_bg_path):
             for file in os.listdir(_bg_path):
-                bg = pg.image.load(os.path.join(_bg_path, file)).convert()
-                # Ridimensiona subito il background per evitare di farlo nel loop
-                bg = pg.transform.scale(bg, (self.WIDTH, self.HEIGHT)) 
-                name = file.rsplit(".", 1)[0]
-                self.backgrounds[name] = bg
+                if file.endswith("png") or file.endswith("jpg"):
+                    bg = pg.image.load(os.path.join(_bg_path, file)).convert()
+                    # Ridimensiona subito il background per evitare di farlo nel loop
+                    bg = pg.transform.scale(bg, (self.WIDTH, self.HEIGHT)) 
+                    name = file.rsplit(".", 1)[0]
+                    self.backgrounds[name] = bg
 
         # Bottoni
         if os.path.exists(_btns_path):
             for file in os.listdir(_btns_path):
-                name = file.rsplit(".", 1)[0]
-                button = PNGButton(os.path.join(_btns_path, file),
-                                    name=name, font=self.fonts['pixel'])
-                self.buttons[name] = button
+                if file.endswith("png") or file.endswith("jpg"):
+                    name = file.rsplit(".", 1)[0]
+                    button = PNGButton(os.path.join(_btns_path, file),
+                                        name=name, font=self.fonts['pixel'])
+                    self.buttons[name] = button
                 
         # Sprites
         if os.path.exists(_sprites_path):
             for file in os.listdir(_sprites_path):
-                name = file.rsplit(".", 1)[0]
-                sprite = pg.image.load(os.path.join(_sprites_path, file)).convert_alpha()
-                sprite = pg.transform.scale(sprite, (50, 50))
-                self.sprites[name] = sprite
+                if file.endswith("png") or file.endswith("jpg"):
+                    name = file.rsplit(".", 1)[0]
+                    sprite = pg.image.load(os.path.join(_sprites_path, file)).convert_alpha()
+                    sprite = pg.transform.scale(sprite, (50, 50))
+                    self.sprites[name] = sprite
     
     def get_active_buttons(self) -> pg.sprite.Group[PNGButton]:
         return self. __active_buttons
@@ -177,10 +183,18 @@ class Renderer:
             self.create_btns(titles, _button, start_y)
             if not self.__graph:
                 try:
+                    Drone.zeroCounter()
                     self.__graph = Parser.parse_map(os.path.join(_curr_path))
                 except (ParsingException, MultipleParsingExceptions) as e:
                     raise e
-            
+
+            self.__scheduler = Scheduler(self.__graph)
+            try:
+                self.__scheduler.schedule()
+            except SchedulerException as e:
+                raise RenderException(str(e))
+            self.__turn_timer = 0
+            self.__current_turn = 1
         # SMISTAMENTO
         try:
             match mode:
@@ -205,7 +219,7 @@ class Renderer:
             if not self.__graph_surface:
                 raise RenderException("Unexistent graph to draw")
             self.__graph_surface.fill((0, 0, 0, 0))
-            self.ft_mapping = Renderer.GraphRenderer.drawGraph(self.__graph, self.__graph_surface)
+            self.ft_mapping = GraphRenderer.drawGraph(self.__graph, self.__graph_surface, self.sprites)
             self.__dr.drawDrones(self.__graph_surface, self.__graph, self.ft_mapping)
             graph_rect = self.__graph_surface.get_rect()
             graph_rect.center = self.SCREEN.get_width() // 2, self.SCREEN.get_height() // 2
@@ -215,79 +229,97 @@ class Renderer:
         
     def _update(self, mode: Mode) -> None:
         self.__active_buttons.update()
+        target_res: Zone | Connection | None
         
         if mode == Mode.FLYING:
-            if self.__graph:
-                base_step = 1.0 / self.FPS        
-                for drone in self.__graph.get_drones():
-                    drone.update(base_step) # Passiamo il passo base al drone
+           if self.__graph and self.__scheduler:
+                if not hasattr(self, '_Renderer__turn_timer'):
+                    self.__turn_timer = 0
+                    self.__current_turn = 1
+                
+                # scatta un turn ogni secondo
+                self.__turn_timer += 1
+                if self.__turn_timer >= self.FPS:
+                    self.__turn_timer = 0
+                    
+                    if self.__current_turn <= self.__scheduler.TURNS:
+                        for drone in self.__graph.get_drones():
+                            target_res = drone.get_action_at_turn(self.__current_turn)[1]
+                            if target_res is not None:
+                                drone.set_where(target_res)
+
+                                if isinstance(target_res, Zone):
+                                    drone.progress = 0.0
+                                    drone.update_speed()
+                        #turno successivo
+                        self.__current_turn += 1
+                            
 
     def update_frame(self) -> None:
         pg.display.flip()
         self.CLOCK.tick(60)
                     
-    class GraphRenderer:
-        @classmethod
-        def drawConnection(cls, conn: Connection,
-                        surface: pg.Surface,
-                        normalizer_funct: Callable | None=None) -> None:
-            color = pg.Color("#000000")
-            color.a = 255
-            xa, ya = conn.get_zoneA().get_coordinates()
-            xb, yb = conn.get_zoneB().get_coordinates()
-            start = (xa, ya)
-            end = (xb, yb)
-            if normalizer_funct:
-                start = normalizer_funct(xa, ya)
-                end = normalizer_funct(xb, yb)
-            pg.draw.line(surface, color, start, end, 2)
-        
-        @classmethod
-        def drawZone(cls, zone: Zone,
+class GraphRenderer:
+    @classmethod
+    def drawConnection(cls, conn: Connection,
                     surface: pg.Surface,
-                    normalizer_funct: Callable | None=None,
-                    radius: int=30) -> None:
-            color = zone.get_color().value
-            x, y = zone.get_coordinates()
-            center = (x,y)
-            if normalizer_funct:
-                center = normalizer_funct(x, y)
-            pg.draw.circle(surface, color, center, radius)
-        
-        @classmethod
-        def drawGraph(cls, graph: Graph,
-                    surface: pg.Surface) -> Callable[[int, int],
-                                                    tuple[int, int]]:
-            to_screen: Callable = calcola_trasformazione(graph.get_zones(),
-                                                         surface.get_width(),
-                                                         surface.get_height())
-            for c in graph.get_connections():
-                cls.drawConnection(c, surface, to_screen)
-            for z in graph.get_zones():
-                cls.drawZone(z, surface, to_screen)
-            
-            #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
-            return to_screen
-        
+                    normalizer_funct: Callable | None=None) -> None:
+        color = pg.Color("#000000")
+        color.a = 255
+        xa, ya = conn.get_zoneA().get_coordinates()
+        xb, yb = conn.get_zoneB().get_coordinates()
+        start = (xa, ya)
+        end = (xb, yb)
+        if normalizer_funct:
+            start = normalizer_funct(xa, ya)
+            end = normalizer_funct(xb, yb)
+        pg.draw.line(surface, color, start, end, 2)
     
-    class DroneRenderer:
-        def __init__(self, img: pg.Surface):
-            self.img = pg.image.load(img).convert_alpha()
-            self.img = pg.transform.scale(self.img, (80, 50))
-        
-        def drawDrone(self, screen: pg.Surface,
-                    d: Drone,
-                    ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
-            x, y = d.get_coordinates()
-            if ft_mapping:
-                x1, y1 = ft_mapping(x, y)
-            img_rect = self.img.get_rect(center=(x1, y1))
-            screen.blit(self.img, img_rect)
-            if not d.get_last_pos() == d.get_where():
-                print(f"{d.ID} : {x}, {y}")
+    @classmethod
+    def drawZone(cls, zone: Zone,
+                surface: pg.Surface,
+                normalizer_funct: Callable | None=None,
+                radius: int=30) -> None:
+        color = zone.get_color().value
+        x, y = zone.get_coordinates()
+        center = (x,y)
+        if normalizer_funct:
+            center = normalizer_funct(x, y)
             
+        pg.draw.circle(surface, color, center, radius)
+    
+    @classmethod
+    def drawGraph(cls, graph: Graph,
+                surface: pg.Surface,
+                sprites: dict[str, pg.Surface]) -> Callable[[int, int],
+                                                            tuple[int, int]]:
+        to_screen: Callable = calcola_trasformazione(graph.get_zones(),
+                                                        surface.get_width(),
+                                                        surface.get_height())
+        for c in graph.get_connections():
+            cls.drawConnection(c, surface, to_screen)
+        for z in graph.get_zones():
+            cls.drawZone(z, surface, to_screen)
         
-        def drawDrones(self, screen: pg.Surface, graph: Graph,
-                    ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
-            for d in graph.get_drones():
-                self.drawDrone(screen, d, ft_mapping)
+        #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
+        return to_screen
+    
+
+class DroneRenderer:
+    def __init__(self, img: pg.Surface):
+        self.img = pg.image.load(img).convert_alpha()
+        self.img = pg.transform.scale(self.img, (80, 50))
+    
+    def drawDrone(self, screen: pg.Surface,
+                d: Drone,
+                ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+        x, y = d.get_coordinates()
+        if ft_mapping:
+            x1, y1 = ft_mapping(x, y)
+        img_rect = self.img.get_rect(center=(x1, y1))
+        screen.blit(self.img, img_rect)
+    
+    def drawDrones(self, screen: pg.Surface, graph: Graph,
+                ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+        for d in graph.get_drones():
+            self.drawDrone(screen, d, ft_mapping)

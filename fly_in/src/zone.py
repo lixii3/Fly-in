@@ -25,6 +25,7 @@ class Zone:
         self.__type = data.metadata.z_type
         self.__cost = self.__type.value
         self.__color = data.metadata.color
+        self._tag = data.tag
         
         max_d = data.metadata.max_drones
         self.MAX_DRONES: Final[int] = max_d if not max_d == None else 1
@@ -73,7 +74,7 @@ class Zone:
         return -1
 
     def space_left_at(self, turn: int) -> int:
-        if self.get_type() in (Tag.START_HUB, Tag.END_HUB):
+        if self._tag in [Tag.START_HUB, Tag.END_HUB]:
             return 999999
         
         reserved = self.__reservations.get(turn, 0)

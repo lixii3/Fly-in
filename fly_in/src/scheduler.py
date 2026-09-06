@@ -16,8 +16,9 @@ class SchedulerException(Exception):
 class Scheduler:
     def __init__(self, graph: Graph):
         self.__graph = graph
+        self.TURNS = -1
 
-    def schedule(self):
+    def schedule(self) -> int:
         drone: Drone
         resource: Zone | Connection
         for drone in self.__graph.get_drones():
@@ -33,10 +34,11 @@ class Scheduler:
             else:
                 raise SchedulerException(f"Errore: nessun percorso trovato per {drone.ID}")
 
-        self.__generate_output_file()
+        self.TURNS = self.__generate_output_file()
+        print(f"Total turns: {self.TURNS}")
 
 
-    def __generate_output_file(self, filename: str = "output.txt") -> None:
+    def __generate_output_file(self, filename: str = "output.txt") -> int:
         curr_turn = 1
         dest: Zone | Connection
         action: Action
@@ -67,13 +69,16 @@ class Scheduler:
         try:
             with open(filename, "w") as file:
                 file.writelines(output)
+            with open(filename, "r") as file:
+                lines = sum(1 for _ in file)
         except OSError as e:
             raise SchedulerException(str(e[0]))
+        return lines
 
-if __name__ == "__main__":
-    from fly_in.src.parser import Parser
-    dir_path = "fly_in/maps/hard/01_maze_nightmare.txt"
-
-    g = Parser.parse_map(dir_path)
-    s = Scheduler(g)
-    s.schedule()
+#if __name__ == "__main__":
+#    from fly_in.src.parser import Parser
+#    dir_path = "fly_in/maps/hard/01_maze_nightmare.txt"
+#
+#    g = Parser.parse_map(dir_path)
+#    s = Scheduler(g)
+#    s.schedule()

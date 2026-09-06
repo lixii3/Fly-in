@@ -2,6 +2,12 @@ from __future__ import annotations
 from enum import Enum
 
 
+class FlyInException(Exception):
+    def __init__(self, msg: str) -> None:
+        self.msg = msg
+
+    def __str__(self) -> None:
+        return f"FlyInException: {self.msg}"
 class Tag(Enum):
     START_HUB = "start_hub"
     END_HUB = "end_hub"

@@ -36,21 +36,6 @@ class Application:
             cls.__renderer.update_frame()
         pg.quit()
 
-    def schedule(cls):
-        # Esempio di utilizzo (pseudo-codice per il tuo main loop):
-        for drone in cls.__graph.get_drones():
-            path = cls.__graph.get_min_cost_path(cls.__graph.get_start(), cls.__graph.get_end(), start_turn=0)
-            
-            if path:
-                # Assegna il percorso al drone
-                drone.set_path(path)
-                
-                # Effettua le prenotazioni fisiche su Zone e Connection per bloccare gli altri!
-                for action, resource, turn in path:
-                    if action in ("MOVE", "WAIT", "TRANSIT"):
-                        resource.reserve(turn)
-            else:
-                print(f"Errore: nessun percorso trovato per {drone.ID}")
     def _handle_events(cls, events: list) -> None:
         for event in events:
             if event.type == pg.QUIT:
@@ -91,7 +76,7 @@ class Application:
         cls.MODE = new_mode
         try:
            cls.__renderer.render_mode(cls.MODE, clicked)
-        except (RenderException, ParsingException, MultipleParsingExceptions) as e:
+        except (RenderException, ParsingException, MultipleParsingExceptions):
             raise ApplicationException("change_mode")
         
 
@@ -100,5 +85,5 @@ if __name__ == '__main__':
         app = Application()
         app.run()
     except ApplicationException as e:
-        print(e.errors())
+        print(e)
     
