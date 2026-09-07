@@ -63,12 +63,11 @@ class Renderer:
         # Backgrounds
         if os.path.exists(_bg_path):
             for file in os.listdir(_bg_path):
-                if file.endswith("png") or file.endswith("jpg"):
-                    bg = pg.image.load(os.path.join(_bg_path, file)).convert()
-                    # Ridimensiona subito il background per evitare di farlo nel loop
-                    bg = pg.transform.scale(bg, (self.WIDTH, self.HEIGHT)) 
-                    name = file.rsplit(".", 1)[0]
-                    self.backgrounds[name] = bg
+                bg = pg.image.load(os.path.join(_bg_path, file)).convert()
+                # Ridimensiona subito il background per evitare di farlo nel loop
+                bg = pg.transform.scale(bg, (self.WIDTH, self.HEIGHT)) 
+                name = file.rsplit(".", 1)[0]
+                self.backgrounds[name] = bg
 
         # Bottoni
         if os.path.exists(_btns_path):
@@ -250,7 +249,7 @@ class Renderer:
 
                                 if isinstance(target_res, Zone):
                                     drone.progress = 0.0
-                                    drone.update_speed()
+                                    # drone.update_speed()
                         #turno successivo
                         self.__current_turn += 1
                             
@@ -279,27 +278,40 @@ class GraphRenderer:
     def drawZone(cls, zone: Zone,
                 surface: pg.Surface,
                 normalizer_funct: Callable | None=None,
+                img: pg.Surface | None = None,
                 radius: int=30) -> None:
         color = zone.get_color().value
         x, y = zone.get_coordinates()
         center = (x,y)
         if normalizer_funct:
             center = normalizer_funct(x, y)
-            
-        pg.draw.circle(surface, color, center, radius)
+        if img is None:
+            pg.draw.circle(surface, color, center, radius)
+        else:
+            img_rect = img.get_rect(center=center)
+            surface.blit(img, img_rect)
     
     @classmethod
     def drawGraph(cls, graph: Graph,
                 surface: pg.Surface,
-                sprites: dict[str, pg.Surface]) -> Callable[[int, int],
+                sprites: dict[str, pg.Surface] | None = None) -> Callable[[int, int],
                                                             tuple[int, int]]:
         to_screen: Callable = calcola_trasformazione(graph.get_zones(),
                                                         surface.get_width(),
                                                         surface.get_height())
         for c in graph.get_connections():
             cls.drawConnection(c, surface, to_screen)
+        img: pg.Surface
         for z in graph.get_zones():
-            cls.drawZone(z, surface, to_screen)
+            if sprites is not None:
+                if z._tag == Tag.START_HUB and "start" in sprites:
+                    img = sprites["start"]
+                elif z._tag == Tag.END_HUB and "end" in sprites:
+                    img = sprites["end"]
+                else:
+                    print(z.get_type().getName())
+                    img = sprites.get(z.get_type().getName())
+            cls.drawZone(z, surface, to_screen, img)
         
         #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
         return to_screen

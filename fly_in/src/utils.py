@@ -15,7 +15,7 @@ class Tag(Enum):
     CONNECTION = "connection"
 
     @classmethod
-    def getTag(cls, tag: str):
+    def get(cls, tag: str):
         return cls.__members__.get(tag.upper())
 
 class ZoneType(Enum):
@@ -25,9 +25,11 @@ class ZoneType(Enum):
     BLOCKED = 99999999999999
 
     @classmethod
-    def getZone(cls, zone: str):
+    def get(cls, zone: str):
         return cls.__members__.get(zone.upper())
 
+    def getName(self) -> str:
+        return self.name.lower()
 class ParsingColors(Enum):
     RED = "#FF0000"
     MAGENTA = "#FF00FF"

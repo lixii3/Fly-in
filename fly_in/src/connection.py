@@ -66,23 +66,10 @@ class Connection:
     def get_zoneB(self) -> Zone:
         return self.__arch[1]
     
-#    def get_coordinates(self) -> tuple[int, int]:
-#        xa, ya = self.get_zoneA().get_coordinates()
-#        xb, yb = self.get_zoneB().get_coordinates()
-#        return ((xa + xb) // 2, (ya + yb) // 2)
-    
-    def get_coordinates_at(self, progress: int) -> tuple[int, int]:
-        """
-        progress: un valore tra 0.0 (inizio in ZoneA) e 1.0 (fine in ZoneB)
-        """
+    def get_coordinates(self) -> tuple[int, int]:
         xa, ya = self.get_zoneA().get_coordinates()
         xb, yb = self.get_zoneB().get_coordinates()
-        
-        # Interpolazione lineare (LERP)
-        curr_x = xa + (xb - xa) * progress
-        curr_y = ya + (yb - ya) * progress
-        
-        return (curr_x, curr_y)
+        return ((xa + xb) // 2, (ya + yb) // 2)
 
     def get_drones_in(self) -> list[Drone]:
         return self.__drones_in

@@ -130,7 +130,7 @@ class Parser:
 
         if ":" not in line:
             raise ParsingException(msg="Missing ':' after tag")
-        tag = Tag.getTag(line.split(":")[0])
+        tag = Tag.get(line.split(":")[0])
         if tag is None:
             raise ParsingException(msg="Invalid tag")
 
@@ -199,7 +199,7 @@ class Parser:
             if key not in _tags or key in meta_dict:
                 raise ParsingException(msg="Invalid metadata")
             if key == "zone":
-                meta_dict[key] = ZoneType.getZone(value)
+                meta_dict[key] = ZoneType.get(value)
                 if meta_dict[key] is None:
                     raise ParsingException(msg="Invalid zone value in metadata")
             elif key == "color":
