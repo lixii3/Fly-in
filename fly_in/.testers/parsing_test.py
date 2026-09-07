@@ -1,6 +1,8 @@
-from fly_in.src.parser import Parser, MultipleParsingExceptions, ParsingException
+from fly_in.src.parser import Parser,\
+    MultipleParsingExceptions, ParsingException
 import os
 import sys
+
 
 def test_cases(dir_path: str, verbose: bool = False):
     err_list: list[str] = []
@@ -22,7 +24,8 @@ def test_cases(dir_path: str, verbose: bool = False):
     if verbose:
         print(output)
     else:
-        print("Pass the argument 'verbose', 'true' or '1' to view error details for each tested file")
+        print("Pass the argument 'verbose', 'true' or '1' to view error details "
+              "for each tested file")
     print("=+" * 20 + "SUMMARY" + "+=" * 20)
     ok = "[OK]"
     notok = "[ERROR]"

@@ -277,7 +277,8 @@ class Renderer:
                 # Quando il timer raggiunge gli FPS, il turno è finito
                 if self.__turn_timer >= self.FPS:
                     self.__turn_timer = 0
-                    self.__current_turn += 1
+                    if self.__current_turn <= self.__scheduler.TURNS:
+                        self.__current_turn += 1
                     
                     # Carica le mosse per il nuovo turno
                     for drone in self.__graph.get_drones():

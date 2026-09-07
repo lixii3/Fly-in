@@ -1,10 +1,13 @@
-from fly_in.src.parser import Parser, ParsingException, MultipleParsingExceptions
+from fly_in.src.parser import Parser,\
+    ParsingException, MultipleParsingExceptions
 from fly_in.src.scheduler import Scheduler, SchedulerException
 import os
 import sys
 
+
 outputfile = "test_output.txt"
 dir_path = "fly_in/maps/hard"
+
 
 def test(verbose):
     err_list: list[str] = []
@@ -12,7 +15,7 @@ def test(verbose):
     try:
         file_list = [f for f in os.listdir(dir_path) if f.endswith('.txt')]
         # svuota file
-        with open(outputfile, "w") as f:
+        with open(outputfile, "w") as _:
             pass
     except OSError as e:
         raise e
