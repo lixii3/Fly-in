@@ -18,23 +18,27 @@ class ApplicationException(Exception):
 class Application:
     MODE: Mode = Mode.NONE
     __running = False
-    __renderer = Renderer()
+    __renderer: Renderer
 
     @classmethod
     def run(cls) -> None:
         cls.MODE = Mode.MENU
         try:
+            cls.__renderer = Renderer()
             cls._change_mode(cls.MODE)
-        except (RenderException, ApplicationException):
-            raise ApplicationException("init")
+        except RenderException as e:
+            raise ApplicationException(str(e))
         # application loop
         cls.__running = True
         while cls.__running:
             events = pg.event.get()
-            cls._handle_events(events)
-            cls.__renderer._update(cls.MODE)
-            cls.__renderer._draw(cls.MODE)
-            cls.__renderer.update_frame()
+            try:
+                cls._handle_events(events)
+                cls.__renderer._update(cls.MODE)
+                cls.__renderer._draw(cls.MODE)
+                cls.__renderer.update_frame()
+            except RenderException as e:
+                raise ApplicationException(str(e))
         pg.quit()
 
     @classmethod

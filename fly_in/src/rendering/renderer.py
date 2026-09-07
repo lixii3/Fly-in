@@ -43,9 +43,13 @@ class Renderer:
         self.buttons: dict[str, PNGButton] = {}
         self.sprites: dict[str, pg.Surface] = {}
         self.__graph: Graph
-        self.__dr: DroneRenderer = DroneRenderer("fly_in/src/rendering/resources/sprites/drone.png")
         self.__scheduler: Scheduler
         self._load_resources()
+        try:
+            img = self.sprites['drone']
+            self.__dr: DroneRenderer = DroneRenderer(img)
+        except KeyError:
+            raise RenderException("Couldn't find drone png resource")
 
     def _load_resources(self) -> None:
         _font_path = "fly_in/src/rendering/resources/fonts"
@@ -72,10 +76,15 @@ class Renderer:
         # Bottoni
         if os.path.exists(_btns_path):
             for file in os.listdir(_btns_path):
-                if file.endswith("png") or file.endswith("jpg"):
+                if file.endswith("png") or file.endswith("jpg")\
+                   and not file.startswith("."):
                     name = file.rsplit(".", 1)[0]
-                    button = PNGButton(os.path.join(_btns_path, file),
-                                        name=name, font=self.fonts['pixel'])
+                    try:
+                        button = PNGButton(os.path.join(_btns_path, file),
+                                            name=name, font=self.fonts['pixel'])
+                    except KeyError:
+                        button = PNGButton(os.path.join(_btns_path, file),
+                                           name=name)
                     self.buttons[name] = button
                 
         # Sprites
@@ -142,7 +151,8 @@ class Renderer:
         def __maps_layout() -> None:
             titles = os.listdir(_maps_path)
             titles = [dir for dir in titles if 
-                        os.path.isdir(os.path.join(_maps_path, dir))]
+                        os.path.isdir(os.path.join(_maps_path, dir))
+                        and not dir.startswith(".")]
             titles.append("back")
             centered = False
             start_y = 150
@@ -160,7 +170,8 @@ class Renderer:
             global _curr_path
             _curr_path = os.path.join(_maps_path, _clicked)
             for filename in os.listdir(_curr_path):
-                if os.path.isfile(os.path.join(_curr_path, filename)) and filename.endswith(".txt"):
+                if os.path.isfile(os.path.join(_curr_path, filename)) and filename.endswith(".txt")\
+                   and not filename.startswith("."):
                     name = filename.rsplit(".")[0]
                     titles.append(name)
             titles.append("back")
@@ -178,7 +189,7 @@ class Renderer:
             global _curr_path
             _curr_path = os.path.join(_curr_path, _clicked + ".txt")
             titles  = ["back"]
-            start_y = self.SCREEN.get_height() // 10 * 9 # posizione ad un quarto dalla fine dello schermo
+            start_y = self.SCREEN.get_height() // 10 * 9
             self.create_btns(titles, _button, start_y)
             if not self.__graph:
                 try:
@@ -349,25 +360,18 @@ class GraphRenderer:
         
         #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
         return to_screen
-    
+
 
 class DroneRenderer:
     def __init__(self, img: pg.Surface):
-        self.img = pg.image.load(img).convert_alpha()
-        self.img = pg.transform.scale(self.img, (80, 50))
-    
-import math # Ricordati di aggiungere questo import in cima al file renderer.py
+        self.img = img
 
-class DroneRenderer:
-    def __init__(self, img: pg.Surface):
-        self.img = pg.image.load(img).convert_alpha()
-        # Se i droni distanziati sembrano troppo grandi, potresti voler ridurre leggermente la scala
         self.img = pg.transform.scale(self.img, (80, 50)) 
     
     def drawDrone(self, screen: pg.Surface,
                 d: Drone,
                 ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
-
+        import math
         x, y = DroneRenderer._get_render_coordinates(d)
         
         if ft_mapping:

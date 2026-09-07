@@ -24,7 +24,10 @@ class PNGButton(pg.sprite.Sprite):
 
         # Salviamo i parametri per poterli riutilizzare nel metodo add_text
         self.name = name
-        self.font = font
+        if font:
+            self.font = font
+        else:
+            self.font = pg.font.SysFont("Arial", 35)
         self.text_color = text_color
         self.outline_color = outline_color
         self.outline_thickness = outline_thickness

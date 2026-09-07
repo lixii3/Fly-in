@@ -1,7 +1,7 @@
 from fly_in.src.graph import Graph
 from fly_in.src.drone import Drone
-from fly_in.src.zone import Zone
-from fly_in.src.connection import Connection
+from fly_in.src.zone import Zone, ZoneException
+from fly_in.src.connection import Connection, ConnectionException
 from fly_in.src.utils import Action
 
 
@@ -30,7 +30,10 @@ class Scheduler:
 
                 # Effettua le prenotazioni fisiche su Zone e Connection per bloccare gli altri
                 for _, resource, turn in path:
-                    resource.reserve(turn)
+                    try:
+                        resource.reserve(turn)
+                    except (ConnectionException, ZoneException) as e:
+                        raise SchedulerException(str(e))
             else:
                 raise SchedulerException(f"Errore: nessun percorso trovato per {drone.ID}")
 

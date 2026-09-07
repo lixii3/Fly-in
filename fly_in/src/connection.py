@@ -29,7 +29,7 @@ class Connection:
             )
             data: ConnectionData = ConnectionData(name=name, metadata=metadata)
         except ValidationError as e:
-            raise e
+            raise ConnectionException(str(e))
         self.__init__(data, [zoneA, zoneB])
 
     def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
@@ -37,7 +37,6 @@ class Connection:
         self.__arch: tuple[Zone, Zone] = ()
         self.__color = data.metadata.color
         self.MAX_LINK_CAPACITY: Final[int] = data.metadata.max_link_capacity
-        self.__drones_in: list[Drone]
         self.__reservations: dict[int, int] = {}
 
         __tmparch: list[Zone] = []
@@ -71,12 +70,6 @@ class Connection:
         xb, yb = self.get_zoneB().get_coordinates()
         return ((xa + xb) // 2, (ya + yb) // 2)
 
-    def get_drones_in(self) -> list[Drone]:
-        return self.__drones_in
-    
-    def space_left(self) -> int:
-        return self.MAX_LINK_CAPACITY - len(self.__drones_in)
-    
     def space_left_at(self, turn: int) -> int:
         # Sottrai i droni già prenotati per quel turno specifico
         reserved = self.__reservations.get(turn, 0)
@@ -87,17 +80,3 @@ class Connection:
             raise ConnectionException(f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}")
         self.__reservations[turn] = self.__reservations.get(turn, 0) + 1
 
-    def drone_in(self, drone: Drone) -> None:
-        if not self.space_left():
-            raise ConnectionException("Error: connection is full, "
-                                      f"unable to insert drone '{drone.ID}'")
-        self.__drones_in.append(drone)
-        drone.set_where(self)
-
-    def drone_out(self, drone: Drone) -> None:
-        try:
-            self.__drones_in.remove(drone)
-        except ValueError:
-            raise ConnectionException(f"Error: drone '{drone.ID}' is not present in"
-                                      f"connection '{self.__name}', unable to get it out")
-        drone.set_where(self.get_zoneB())
