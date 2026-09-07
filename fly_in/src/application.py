@@ -20,6 +20,7 @@ class Application:
     __running = False
     __renderer = Renderer()
 
+    @classmethod
     def run(cls) -> None:
         cls.MODE = Mode.MENU
         try:
@@ -36,6 +37,7 @@ class Application:
             cls.__renderer.update_frame()
         pg.quit()
 
+    @classmethod
     def _handle_events(cls, events: list) -> None:
         for event in events:
             if event.type == pg.QUIT:
@@ -52,7 +54,8 @@ class Application:
                     break
                 except ApplicationException:
                     cls.__running = False
-                        
+
+    @classmethod
     def _click(cls, event_name: str) -> None:
         _btn_names = [sp.name for sp in cls.__renderer.get_active_buttons()]
         try:
@@ -69,8 +72,8 @@ class Application:
                 cls._change_mode(Mode.FLYING, event_name)
         except ApplicationException:
             raise ApplicationException("_click")
-        
 
+    @classmethod
     def _change_mode(cls, new_mode: Mode,
                      clicked: str="") -> None:
         cls.MODE = new_mode
@@ -78,12 +81,3 @@ class Application:
            cls.__renderer.render_mode(cls.MODE, clicked)
         except (RenderException, ParsingException, MultipleParsingExceptions):
             raise ApplicationException("change_mode")
-        
-
-if __name__ == '__main__':
-    try:
-        app = Application()
-        app.run()
-    except ApplicationException as e:
-        print(e)
-    

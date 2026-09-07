@@ -35,7 +35,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         if sys.argv[1].lower() in ["verbose", "true", "1"]:
             verbose = True
-    dir_path = "fly_in/maps/test/files"
+    dir_path = "fly_in/maps/.test/files"
     try:
         test_cases(dir_path, verbose=verbose)
     except (OSError, MultipleParsingExceptions) as e:

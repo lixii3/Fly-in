@@ -194,6 +194,7 @@ class Renderer:
                 raise RenderException(str(e))
             self.__turn_timer = 0
             self.__current_turn = 1
+
         # SMISTAMENTO
         try:
             match mode:
@@ -223,36 +224,69 @@ class Renderer:
             graph_rect = self.__graph_surface.get_rect()
             graph_rect.center = self.SCREEN.get_width() // 2, self.SCREEN.get_height() // 2
             self.SCREEN.blit(self.__graph_surface, graph_rect)
+
+            # rendering info testo info mappa
+            try:
+                font = self.fonts["pixel"]
+            except KeyError:
+                font = pg.font.Font("Arial")
+            text = font.render(f"Total drones: {self.__graph.get_nb_drones()} --- "
+                                      f"Total Turns: {self.__scheduler.TURNS} --- "
+                                      f"Current Turn: {self.__current_turn - 1}",
+                                      True, (255, 255, 255))
+            text_rect = text.get_rect(topleft=(50, 50))
+            self.SCREEN.blit(text, text_rect)
+
         # Disegna tutti gli sprite attivi
         self.__active_buttons.draw(self.SCREEN)
         
     def _update(self, mode: Mode) -> None:
         self.__active_buttons.update()
-        target_res: Zone | Connection | None
         
         if mode == Mode.FLYING:
            if self.__graph and self.__scheduler:
                 if not hasattr(self, '_Renderer__turn_timer'):
                     self.__turn_timer = 0
                     self.__current_turn = 1
+
+                    for drone in self.__graph.get_drones():
+                        target_res = drone.get_action_at_turn(self.__current_turn)[1]
+                        if target_res is not None:
+                            drone.set_where(target_res)
+                        else:
+                            # Se un drone è in WAIT al turno 1, deve rimanere fermo
+                            drone.set_where(drone.get_where())
+
+                    # Inizializza i target del primo turno
+                    for drone in self.__graph.get_drones():
+                        target_res = drone.get_action_at_turn(self.__current_turn)[1]
+                        if target_res is not None:
+                            drone.set_where(target_res)
+                        else:
+                            # se un drone non ha azioni (es. percorso vuoto), lo teniamo fermo
+                            drone.set_where(drone.get_where())
                 
-                # scatta un turn ogni secondo
+                # Calcola il progresso basato sui frame correnti
+                progress = self.__turn_timer / self.FPS
+                for drone in self.__graph.get_drones():
+                    drone.progress = progress
+
+                # Scatta un frame
                 self.__turn_timer += 1
+                
+                # Quando il timer raggiunge gli FPS, il turno è finito
                 if self.__turn_timer >= self.FPS:
                     self.__turn_timer = 0
+                    self.__current_turn += 1
                     
-                    if self.__current_turn <= self.__scheduler.TURNS:
-                        for drone in self.__graph.get_drones():
-                            target_res = drone.get_action_at_turn(self.__current_turn)[1]
-                            if target_res is not None:
-                                drone.set_where(target_res)
-
-                                if isinstance(target_res, Zone):
-                                    drone.progress = 0.0
-                                    # drone.update_speed()
-                        #turno successivo
-                        self.__current_turn += 1
-                            
+                    # Carica le mosse per il nuovo turno
+                    for drone in self.__graph.get_drones():
+                        target_res = drone.get_action_at_turn(self.__current_turn)[1]
+                        if target_res is not None:
+                            drone.set_where(target_res)
+                        else:
+                            # il drone ha finito il suo percorso per questo livello.
+                            drone.set_where(drone.get_where())
 
     def update_frame(self) -> None:
         pg.display.flip()
@@ -309,7 +343,6 @@ class GraphRenderer:
                 elif z._tag == Tag.END_HUB and "end" in sprites:
                     img = sprites["end"]
                 else:
-                    print(z.get_type().getName())
                     img = sprites.get(z.get_type().getName())
             cls.drawZone(z, surface, to_screen, img)
         
@@ -322,16 +355,64 @@ class DroneRenderer:
         self.img = pg.image.load(img).convert_alpha()
         self.img = pg.transform.scale(self.img, (80, 50))
     
+import math # Ricordati di aggiungere questo import in cima al file renderer.py
+
+class DroneRenderer:
+    def __init__(self, img: pg.Surface):
+        self.img = pg.image.load(img).convert_alpha()
+        # Se i droni distanziati sembrano troppo grandi, potresti voler ridurre leggermente la scala
+        self.img = pg.transform.scale(self.img, (80, 50)) 
+    
     def drawDrone(self, screen: pg.Surface,
                 d: Drone,
                 ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
-        x, y = d.get_coordinates()
+
+        x, y = DroneRenderer._get_render_coordinates(d)
+        
         if ft_mapping:
             x1, y1 = ft_mapping(x, y)
-        img_rect = self.img.get_rect(center=(x1, y1))
+        else:
+            x1, y1 = x, y
+
+        try:
+            drone_index = int(d.ID[1:])
+        except ValueError:
+            drone_index = 0
+            
+        # Parametri dell'offset
+        offset_radius = 15 # Distanza in pixel dal vero centro
+        angle = drone_index * 1.5
+        
+        offset_x = math.cos(angle) * offset_radius
+        offset_y = math.sin(angle) * offset_radius
+
+        final_x = x1 + offset_x
+        final_y = y1 + offset_y
+
+        img_rect = self.img.get_rect(center=(final_x, final_y))
         screen.blit(self.img, img_rect)
     
     def drawDrones(self, screen: pg.Surface, graph: Graph,
                 ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
         for d in graph.get_drones():
             self.drawDrone(screen, d, ft_mapping)
+
+
+    @staticmethod
+    def _get_render_coordinates(drone: Drone) -> tuple[float, float]:
+        if not drone.get_where():
+            return (0.0, 0.0)
+            
+        end_x, end_y = drone.get_where().get_coordinates()
+        
+        # Se il drone è fermo o non ha una posizione precedente
+        if not drone.get_last_pos() or drone.get_where() == drone.get_last_pos():
+            return (end_x, end_y)
+
+        start_x, start_y = drone.get_last_pos().get_coordinates()
+
+        # Interpolazione lineare
+        curr_x = start_x + (end_x - start_x) * drone.progress
+        curr_y = start_y + (end_y - start_y) * drone.progress
+        
+        return (curr_x, curr_y)

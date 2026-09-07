@@ -49,15 +49,16 @@ class Drone:
 
     def at_end(self) -> bool:
         where = self.get_where()
-        if where and type(where).__name__ == "Zone":
-            return where.get_type() == Tag.END_HUB
+        if isinstance(where, Zone):
+            return where == Tag.END_HUB
         return False
     
     def at_start(self) -> bool:
         where = self.get_where()
-        if where and type(where).__name__ == "Zone":
-            return where.get_type() == Tag.START_HUB
+        if isinstance(where, Zone):
+            return where == Tag.START_HUB
         return False
+
 
     
     @classmethod
