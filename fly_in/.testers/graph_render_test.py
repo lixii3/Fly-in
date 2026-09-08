@@ -1,4 +1,3 @@
-from fly_in.src.rendering.renderer import Renderer
 import pygame as pg
 from fly_in.src.graph import Graph
 from fly_in.src.parser import Parser
@@ -10,7 +9,8 @@ def test_graph_rendering(graph: Graph):
 
     pg.display.set_caption(f"{graph.get_name()} rendering test by lixi")
     screen = pg.display.set_mode()
-    background = pg.image.load("fly_in/src/rendering/resources/bg/latios.jpg").convert()
+    background = pg.image.load("fly_in/src/rendering/resources/"
+                               "bg/latios.jpg").convert()
     background = pg.transform.scale(
         background, (screen.get_width(), screen.get_height())
     )
@@ -18,7 +18,6 @@ def test_graph_rendering(graph: Graph):
     graph_sourface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
     graph_rect = graph_sourface.get_rect()
     graph_rect.center = screen.get_width() // 2, screen.get_height() // 2
-    gr = Renderer.GraphRenderer()
 
     clock = pg.time.Clock()
     running = True

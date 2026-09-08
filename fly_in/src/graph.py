@@ -2,11 +2,9 @@ from __future__ import annotations
 from typing import Optional, Tuple, List
 from fly_in.src.validation_models import MapData
 from fly_in.src.utils import Tag, Action
-from typing import List
 from fly_in.src.connection import Connection, ConnectionException
 from fly_in.src.zone import Zone
 from fly_in.src.drone import Drone
-
 
 coso = Optional[List[Tuple[Action, Zone | Connection, int]]]
 
@@ -131,11 +129,13 @@ class Graph:
             GraphException: If the drone is already in the graph.
         """
         if drone in self.__drones:
-            raise GraphException(f"Drone '{drone.ID}' already in graph '{self.__name}'")
+            raise GraphException(
+                f"Drone '{drone.ID}' " f"already in graph '{self.__name}'"
+            )
         drone.set_where(self.get_start())
         self.__drones.append(drone)
 
-    def remove_zone(self, zone: Connection) -> None:
+    def remove_zone(self, zone: Zone) -> None:
         """Remove a zone and its incident connections.
 
         Args:
@@ -145,7 +145,8 @@ class Graph:
             self.__zones.remove(zone)
         except ValueError:
             GraphException(
-                f"Error: unexistant '{zone.get_name()}' zonein graph '{self.__name}'"
+                f"Error: unexistant '{zone.get_name()}' "
+                f"zonein graph '{self.__name}'"
             )
         for c in self.__connections:
             if c.get_zoneA() == zone or c.get_zoneB() == zone:
@@ -156,7 +157,11 @@ class Graph:
 
     def graphInfo(self) -> str:
         """Return a human-readable description of the graph."""
-        lines = [f"Graph: {self.__name}", f"Drones: {self.__nb_drones}", "Zones:"]
+        lines = [
+            f"Graph: {self.__name}",
+            f"Drones: " f"{self.__nb_drones}",
+            "Zones:",
+        ]
 
         for zone in self.__zones:
             lines.append(
@@ -169,8 +174,10 @@ class Graph:
         for connection in self.__connections:
             zone_names = sorted([z.get_name() for z in connection.get_arch()])
             lines.append(
-                f"  - {connection.get_name()}: {zone_names[0]} <-> {zone_names[1]}, "
-                f"color={connection.get_color().name}, max_link_capacity={connection.MAX_LINK_CAPACITY}"
+                f"  - {connection.get_name()}: {zone_names[0]} "
+                f"<-> {zone_names[1]}, "
+                f"color={connection.get_color().name}"
+                f"max_link_capacity={connection.MAX_LINK_CAPACITY}"
             )
 
         return "\n".join(lines)
@@ -201,7 +208,9 @@ class Graph:
         Returns:
             int: Sum of absolute coordinate differences.
         """
-        return abs(zoneA.get_x() - zoneB.get_x()) + abs(zoneA.get_y() - zoneB.get_y())
+        return abs(zoneA.get_x() - zoneB.get_x()) + abs(
+            zoneA.get_y() - zoneB.get_y()
+        )
 
     def get_min_cost_path(
         self, start_zone: Zone, end_zone: Zone, start_turn: int = 0
@@ -222,22 +231,37 @@ class Graph:
 
         queue: List[
             Tuple[
-                float, int, int, float, str, Zone, Tuple[Action, Zone | Connection, int]
+                float,
+                int,
+                int,
+                float,
+                str,
+                Zone,
+                List[Tuple[Action, Zone | Connection, int]],
             ]
         ] = []
         counter = 0
 
         start_h = float(self.manhattan_distance(start_zone, end_zone))
+        visited: set[tuple[str, int]] = set()
+        path: Optional[List[Tuple[Action, Zone | Connection, int]]]
+        
         heapq.heappush(
             queue,
-            (start_h, counter, start_turn, 0.0, start_zone.get_name(), start_zone, []),
+            (
+                start_h,
+                counter,
+                start_turn,
+                0.0,
+                start_zone.get_name(),
+                start_zone,
+                [],
+            ),
         )
 
-        visited: set[tuple[str, int]] = set()
-
         while queue:
-            f_cost, _, current_turn, g_cost, _, current_zone, path = heapq.heappop(
-                queue
+            f_cost, _, current_turn, g_cost, _, current_zone, path = (
+                heapq.heappop(queue)
             )
 
             if current_zone == end_zone:
@@ -250,7 +274,9 @@ class Graph:
 
             # OPZIONE 1: WAIT
             if current_zone.space_left_at(current_turn + 1) > 0:
-                next_path = path + [(Action.WAIT, current_zone, current_turn + 1)]
+                next_path = path + [
+                    (Action.WAIT, current_zone, current_turn + 1)
+                ]
                 counter += 1
                 heapq.heappush(
                     queue,
@@ -275,17 +301,21 @@ class Graph:
                 if neighbor.get_type().name == "BLOCKED":
                     continue
 
-                move_cost = float(neighbor.get_cost())  # Può essere 1.0, 2.0 o 0.9999
+                move_cost = float(neighbor.get_cost())
 
                 # OPZIONE 2: MOVE (zone normal e priority)
                 if move_cost <= 1.0:
                     if neighbor.space_left_at(current_turn + 1) > 0:
-                        next_path = path + [(Action.MOVE, neighbor, current_turn + 1)]
+                        next_path = path + [
+                            (Action.MOVE, neighbor, current_turn + 1)
+                        ]
                         counter += 1
                         new_turn = current_turn + 1
                         new_g_cost = g_cost + move_cost
 
-                        h_cost = float(self.manhattan_distance(neighbor, end_zone))
+                        h_cost = float(
+                            self.manhattan_distance(neighbor, end_zone)
+                        )
                         new_f_cost = new_g_cost + h_cost
 
                         heapq.heappush(
@@ -317,7 +347,9 @@ class Graph:
                         new_turn = current_turn + 2
                         new_g_cost = g_cost + 2.0
 
-                        h_cost = float(self.manhattan_distance(neighbor, end_zone))
+                        h_cost = float(
+                            self.manhattan_distance(neighbor, end_zone)
+                        )
                         new_f_cost = new_g_cost + h_cost
 
                         heapq.heappush(

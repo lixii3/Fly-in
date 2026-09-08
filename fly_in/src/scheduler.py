@@ -25,7 +25,7 @@ class SchedulerException(Exception):
 class Scheduler:
     """Assign capacity-aware paths and produce turn output."""
 
-    def __init__(self, graph: Graph):
+    def __init__(self, graph: Graph) -> None:
         """Create a scheduler for a graph.
 
         Args:
@@ -34,7 +34,7 @@ class Scheduler:
         self.__graph = graph
         self.TURNS = -1
 
-    def schedule(self) -> int:
+    def schedule(self) -> None:
         """Route every drone and write the resulting turn output.
 
         Returns:
@@ -81,7 +81,7 @@ class Scheduler:
         """
         curr_turn = 1
         dest: Zone | Connection
-        action: Action
+        action: tuple[Action, Zone | Connection | None, int]
         output: list[str] = []
         all_done: bool
         while True:
@@ -112,7 +112,7 @@ class Scheduler:
             with open(filename, "r") as file:
                 lines = sum(1 for _ in file)
         except OSError as e:
-            raise SchedulerException(str(e[0]))
+            raise SchedulerException(str(e))
         return lines
 
 

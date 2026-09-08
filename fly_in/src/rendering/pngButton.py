@@ -1,6 +1,4 @@
-import sys
 import pygame as pg
-import copy
 
 
 class PNGButton(pg.sprite.Sprite):
@@ -58,7 +56,8 @@ class PNGButton(pg.sprite.Sprite):
             rects = mask.get_bounding_rects()
 
             if rects:
-                # Unisce tutti i rettangoli trovati in un unico rettangolo contenitore
+                # Unisce tutti i rettangoli trovati in un unico
+                # rettangolo contenitore
                 visible_rect = pg.Rect.unionall(rects[0], rects[1:])
                 self.base_image = loaded_image.subsurface(visible_rect).copy()
             else:
@@ -166,11 +165,11 @@ class PNGButton(pg.sprite.Sprite):
                     contour_surf,
                     (*self.glow_color, alpha),
                     (pt[0] + self.glow_radius, pt[1] + self.glow_radius),
-                    1,
-                )
+                    1)
             glow_surface.blit(contour_surf, (0, 0))
 
-        glow_surface.blit(self.original_image, (self.glow_radius, self.glow_radius))
+        glow_surface.blit(self.original_image, (self.glow_radius,
+                                                self.glow_radius))
         return glow_surface
 
     def add_text(self, text: str) -> None:
@@ -184,8 +183,10 @@ class PNGButton(pg.sprite.Sprite):
 
         # Rendering del testo
         if text and self.font:
-            text_surf = self.font.render(text, False, self.text_color)
-            outline_surf = self.font.render(text, False, self.outline_color)
+            text_surf = self.font.render(text, False,
+                                         self.text_color)
+            outline_surf = self.font.render(text, False,
+                                            self.outline_color)
 
             # Crea una superficie per il testo (incluso lo spessore del bordo)
             tw = text_surf.get_width() + self.outline_thickness * 2
@@ -193,13 +194,15 @@ class PNGButton(pg.sprite.Sprite):
             combined_text_surf = pg.Surface((tw, th), pg.SRCALPHA)
 
             # Disegna il bordo
-            for dx in range(-self.outline_thickness, self.outline_thickness + 1):
-                for dy in range(-self.outline_thickness, self.outline_thickness + 1):
+            for dx in range(-self.outline_thickness,
+                            self.outline_thickness + 1):
+                for dy in range(-self.outline_thickness,
+                                self.outline_thickness + 1):
                     if dx != 0 or dy != 0:
                         combined_text_surf.blit(
                             outline_surf,
-                            (dx + self.outline_thickness, dy + self.outline_thickness),
-                        )
+                            (dx + self.outline_thickness,
+                             dy + self.outline_thickness))
 
             # Disegna il testo principale
             combined_text_surf.blit(
@@ -209,24 +212,28 @@ class PNGButton(pg.sprite.Sprite):
             padding = 20
 
             # Se il testo supera la larghezza attuale della base
-            if combined_text_surf.get_width() + padding > self.base_image.get_width():
+            if combined_text_surf.get_width() + padding >\
+               self.base_image.get_width():
                 new_width = combined_text_surf.get_width() + padding
                 new_height = self.base_image.get_height()
 
-                # Scaliamo sia la base_image che l'original_image per mantenere la coerenza
+                # Scaliamo sia la base_image che l'original_image
+                # per mantenere la coerenza
                 self.base_image = pg.transform.scale(
                     self.base_image, (new_width, new_height)
                 )
                 self.original_image = self.base_image.copy()
 
             # Aggiorniamo subito il rect con le nuove dimensioni
-            topleft_pos = self.rect.topleft if hasattr(self, "rect") else (0, 0)
+            topleft_pos = self.rect.topleft if hasattr(self, "rect")\
+                else (0, 0)
             self.rect = self.original_image.get_rect(topleft=topleft_pos)
 
             # Ricalcolo il centro
             btn_center_x = self.original_image.get_width() // 2
             btn_center_y = self.original_image.get_height() // 2
-            text_rect = combined_text_surf.get_rect(center=(btn_center_x, btn_center_y))
+            text_rect = combined_text_surf.get_rect(center=(btn_center_x,
+                                                            btn_center_y))
 
             # Applico il testo e aggiorno la maschera
             self.original_image.blit(combined_text_surf, text_rect)
@@ -239,7 +246,8 @@ class PNGButton(pg.sprite.Sprite):
         if self.is_hovered:
             self.image = self.glow_image
             self.rect = self.image.get_rect(
-                topleft=(self.rect.x - self.glow_radius, self.rect.y - self.glow_radius)
+                topleft=(self.rect.x - self.glow_radius,
+                         self.rect.y - self.glow_radius)
             )
         else:
             self.image = self.original_image
@@ -251,19 +259,22 @@ class PNGButton(pg.sprite.Sprite):
 
         # 1. Controllo base sul rettangolo (molto veloce)
         if self.rect.collidepoint(mouse_pos):
-            # 2. Calcola le coordinate relative del mouse all'interno del rettangolo
+            # 2. Calcola le coordinate relative del mouse
+            # all'interno del rettangolo
             rel_x = mouse_pos[0] - self.rect.x
             rel_y = mouse_pos[1] - self.rect.y
 
             # Se stiamo disegnando il glow, il rect attuale è più grande!
-            # Dobbiamo sottrarre il raggio per calibrare le coordinate con la maschera originale.
+            # Dobbiamo sottrarre il raggio per calibrare le coordinate
+            # con la maschera originale.
             if self.image is self.glow_image:
                 rel_x -= self.glow_radius
                 rel_y -= self.glow_radius
 
             # 3. Controllo collisione Pixel-Perfect
             try:
-                # get_at ritorna 1 se il pixel non è trasparente, 0 se è trasparente
+                # get_at ritorna 1 se il pixel non è trasparente,
+                # 0 se è trasparente
                 self.is_hovered = bool(self.mask.get_at((rel_x, rel_y)))
             except IndexError:
                 # Se le coordinate sforano la maschera originale, ignoriamo

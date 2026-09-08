@@ -20,13 +20,15 @@ class MetaData(BaseModel):
         if self.tag == Tag.CONNECTION and not self.max_link_capacity:
             self.max_link_capacity = 1
         if not self.tag == Tag.CONNECTION and self.max_link_capacity:
-            raise ValueError("hubs expect 'max_link_capacity' field to be None")
+            raise ValueError("hubs expect 'max_link_capacity' "
+                             "field to be None")
         if self.tag == Tag.START_HUB or self.tag == Tag.END_HUB:
             if (
                 self.max_drones and self.max_drones < self.nb_drones
             ) or self.max_drones == 0:
                 raise ValueError(
-                    "Max drone capacity is forbidden for hub of type estart/end"
+                    "Max drone capacity is forbidden for "
+                    "hub of type estart/end"
                 )
             # start e end devono essere normal
             if self.z_type is None:
@@ -96,7 +98,8 @@ class ConnectionData(BaseModel):
             raise ValueError("Tag must be of type ParsingTags.CONNECTION")
         elif " " in self.name or self.name.count("-") != 1:
             raise ValueError(
-                "Connection name can't contain spaces and must contain exactly one dash"
+                "Connection name can't contain spaces and must contain "
+                "exactly one dash"
             )
         elif self.metadata and not self.metadata.tag == Tag.CONNECTION:
             raise ValueError(f"Invalid metadata for connection: '{self.name}'")
@@ -149,6 +152,7 @@ class MapData(BaseModel):
                 raise ValueError(f"Duplicated hub name in map: '{h.name}")
 
         if has_start != 1 or has_end != 1:
-            raise ValueError("Map should have exactly one start and one end hub")
+            raise ValueError("Map should have exactly one start "
+                             "and one end hub")
 
         return self

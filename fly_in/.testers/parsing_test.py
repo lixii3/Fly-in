@@ -1,4 +1,5 @@
-from fly_in.src.parser import Parser, MultipleParsingExceptions, ParsingException
+from fly_in.src.parser import Parser, MultipleParsingExceptions, \
+    ParsingException
 import os
 import sys
 

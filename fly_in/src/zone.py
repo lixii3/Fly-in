@@ -87,7 +87,8 @@ class Zone:
         """
         if not self.space_left():
             raise ZoneException(
-                f"Error: zone capacity is full, unable to insert drone '{drone.ID}'"
+                "Error: zone capacity is full, unable to "
+                f"insert drone '{drone.ID}'"
             )
         self.__drones_in.append(drone)
         drone.set_where(self)

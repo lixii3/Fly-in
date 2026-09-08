@@ -42,7 +42,7 @@ def calcola_trasformazione(
     offset_x = (width - pixel_w) / 2
     offset_y = (height - pixel_h) / 2
 
-    def world_to_screen(x, y) -> tuple[int, int]:
+    def world_to_screen(x: float, y: float) -> tuple[float, float]:
         """Convert one world-space point to screen-space coordinates.
 
         Args:

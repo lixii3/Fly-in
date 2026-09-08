@@ -1,4 +1,5 @@
-from fly_in.src.parser import Parser, ParsingException, MultipleParsingExceptions
+from fly_in.src.parser import Parser, ParsingException, \
+    MultipleParsingExceptions
 from fly_in.src.scheduler import Scheduler, SchedulerException
 import os
 import sys
@@ -46,7 +47,8 @@ def test(verbose):
         print(output)
     else:
         print(
-            "Pass the argument 'verbose', 'true' or '1' to view error details for each tested file"
+            "Pass the argument 'verbose', 'true' or '1' to view error "
+            "details for each tested file"
         )
     print("=+" * 20 + "SUMMARY" + "+=" * 20)
     ok = "[OK]"

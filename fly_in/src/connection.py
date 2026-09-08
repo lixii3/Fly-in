@@ -7,7 +7,6 @@ from pydantic import ValidationError
 
 if TYPE_CHECKING:
     from fly_in.src.zone import Zone
-    from fly_in.src.drone import Drone
 
 
 class ConnectionException(Exception):
@@ -70,7 +69,8 @@ class Connection:
                 __tmparch.append(z)
         if len(__tmparch) != 2:
             raise ConnectionException(
-                f"Expecting zones ('{data.zoneA}', {data.zoneB}') to exist within the map."
+                f"Expecting zones ('{data.zoneA}', {data.zoneB}') "
+                "to exist within the map."
             )
         self.__arch = tuple(__tmparch)
 
@@ -124,7 +124,7 @@ class Connection:
             ConnectionException: If the connection is at capacity.
         """
         if self.space_left_at(turn) <= 0:
-            raise ConnectionException(
-                f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}"
-            )
+            raise ConnectionException("Errore: impossibile prenotare la "
+                                      f"risorsa {self.get_name()} "
+                                      f"al turno {turn}")
         self.__reservations[turn] = self.__reservations.get(turn, 0) + 1

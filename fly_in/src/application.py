@@ -95,9 +95,15 @@ class Application:
             elif event_name == "quit":
                 cls.__running = False
                 return
-            elif cls.MODE == Mode.MAPS and event_name in set(_btn_names) - {"back"}:
+            elif (
+                cls.MODE == Mode.MAPS
+                and event_name in set(_btn_names) - {"back"}
+            ):
                 cls._change_mode(Mode.LEVELS, event_name)
-            elif cls.MODE == Mode.LEVELS and event_name in set(_btn_names) - {"back"}:
+            elif (
+                  cls.MODE == Mode.LEVELS
+                  and event_name in set(_btn_names) - {"back"}
+                 ):
                 cls._change_mode(Mode.FLYING, event_name)
         except ApplicationException:
             raise ApplicationException("_click")

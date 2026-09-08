@@ -54,7 +54,10 @@ class Drone:
             return where.get_coordinates()
         return (0.0, 0.0)
 
-    def get_action_at_turn(self, turn: int) -> tuple[Action, Zone | Connection, int]:
+    def get_action_at_turn(self,
+                           turn: int) -> tuple[Action,
+                                               Zone | Connection,
+                                               int]:
         """Return the scheduled action for a turn.
 
         Args:
@@ -69,11 +72,14 @@ class Drone:
                 return (a, r, t)
         return (Action.NONE, None, 0)
 
-    def set_path(self, path: list[tuple[Action, Zone | Connection, int]]) -> None:
+    def set_path(self, path: list[tuple[Action,
+                                        Zone | Connection,
+                                        int]]) -> None:
         """Replace the drone's scheduled path.
 
         Args:
-            path (list[tuple[Action, Zone | Connection, int]]): Scheduled moves.
+            path (list[tuple[Action, Zone | Connection, int]]): \
+                Scheduled moves.
         """
         self.path = path
 
