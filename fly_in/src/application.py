@@ -9,7 +9,7 @@ from fly_in.src.rendering.pngButton import PNGButton
 class ApplicationException(Exception):
     """Exception raised when the application cannot continue."""
 
-    def __init__(cls, msg: str=""):
+    def __init__(cls, msg: str = ""):
         """Initialize an application-level exception.
 
         Args:
@@ -17,7 +17,7 @@ class ApplicationException(Exception):
         """
         cls.msg = msg
         super().__init__(msg)
-    
+
     def __str__(cls):
         """Return the exception message."""
         return cls.msg
@@ -103,8 +103,7 @@ class Application:
             raise ApplicationException("_click")
 
     @classmethod
-    def _change_mode(cls, new_mode: Mode,
-                     clicked: str="") -> None:
+    def _change_mode(cls, new_mode: Mode, clicked: str = "") -> None:
         """Switch the renderer to a new application mode.
 
         Args:
@@ -114,6 +113,6 @@ class Application:
         """
         cls.MODE = new_mode
         try:
-           cls.__renderer.render_mode(cls.MODE, clicked)
+            cls.__renderer.render_mode(cls.MODE, clicked)
         except (RenderException, ParsingException, MultipleParsingExceptions):
             raise ApplicationException("change_mode")

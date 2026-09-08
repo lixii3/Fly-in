@@ -19,7 +19,7 @@ class PNGButton(pg.sprite.Sprite):
         outline_thickness: int = 2,
         glow_color=(255, 255, 0),
         glow_radius=15,
-        glow_passes=10
+        glow_passes=10,
     ):
         """Create a clickable image button with optional text and glow.
 
@@ -52,11 +52,11 @@ class PNGButton(pg.sprite.Sprite):
         try:
             # Carica l'immagine originale
             loaded_image = pg.image.load(image_path).convert_alpha()
-            
+
             # Ricava la lista dei rettangoli dei pixel visibili
             mask = pg.mask.from_surface(loaded_image)
             rects = mask.get_bounding_rects()
-            
+
             if rects:
                 # Unisce tutti i rettangoli trovati in un unico rettangolo contenitore
                 visible_rect = pg.Rect.unionall(rects[0], rects[1:])
@@ -65,9 +65,7 @@ class PNGButton(pg.sprite.Sprite):
                 self.base_image = loaded_image
         except FileNotFoundError:
             self.base_image = pg.Surface((150, 50), pg.SRCALPHA)
-            pg.draw.rect(
-                self.base_image, (200, 50, 50), (0, 0, 150, 50)
-            )
+            pg.draw.rect(self.base_image, (200, 50, 50), (0, 0, 150, 50))
 
         # L'immagine originale di partenza è un clone della base pulita
         self.original_image = self.base_image.copy()
@@ -87,8 +85,7 @@ class PNGButton(pg.sprite.Sprite):
         else:
             self.glow_image = self._create_glow_image()
         self.mask = pg.mask.from_surface(self.original_image)
-    
-    
+
     def __deepcopy__(self, memo):
         """Create an independent copy of the button and its surfaces.
 
@@ -105,7 +102,7 @@ class PNGButton(pg.sprite.Sprite):
         cls = self.__class__
         new_btn = cls.__new__(cls)
         memo[id(self)] = new_btn
-        
+
         # Inizializza la parte Sprite
         super(PNGButton, new_btn).__init__()
 
@@ -173,11 +170,9 @@ class PNGButton(pg.sprite.Sprite):
                 )
             glow_surface.blit(contour_surf, (0, 0))
 
-        glow_surface.blit(
-            self.original_image, (self.glow_radius, self.glow_radius)
-        )
+        glow_surface.blit(self.original_image, (self.glow_radius, self.glow_radius))
         return glow_surface
-    
+
     def add_text(self, text: str) -> None:
         """Render a label onto the button and rebuild its glow.
 
@@ -212,26 +207,26 @@ class PNGButton(pg.sprite.Sprite):
             )
 
             padding = 20
-            
+
             # Se il testo supera la larghezza attuale della base
             if combined_text_surf.get_width() + padding > self.base_image.get_width():
                 new_width = combined_text_surf.get_width() + padding
                 new_height = self.base_image.get_height()
-                
+
                 # Scaliamo sia la base_image che l'original_image per mantenere la coerenza
-                self.base_image = pg.transform.scale(self.base_image, (new_width, new_height))
+                self.base_image = pg.transform.scale(
+                    self.base_image, (new_width, new_height)
+                )
                 self.original_image = self.base_image.copy()
 
             # Aggiorniamo subito il rect con le nuove dimensioni
-            topleft_pos = self.rect.topleft if hasattr(self, 'rect') else (0, 0)
+            topleft_pos = self.rect.topleft if hasattr(self, "rect") else (0, 0)
             self.rect = self.original_image.get_rect(topleft=topleft_pos)
 
             # Ricalcolo il centro
             btn_center_x = self.original_image.get_width() // 2
             btn_center_y = self.original_image.get_height() // 2
-            text_rect = combined_text_surf.get_rect(
-                center=(btn_center_x, btn_center_y)
-            )
+            text_rect = combined_text_surf.get_rect(center=(btn_center_x, btn_center_y))
 
             # Applico il testo e aggiorno la maschera
             self.original_image.blit(combined_text_surf, text_rect)
@@ -253,19 +248,19 @@ class PNGButton(pg.sprite.Sprite):
         """Update hover state using pixel-perfect mouse collision."""
         mouse_pos = pg.mouse.get_pos()
         was_hovered = self.is_hovered
-        
+
         # 1. Controllo base sul rettangolo (molto veloce)
         if self.rect.collidepoint(mouse_pos):
             # 2. Calcola le coordinate relative del mouse all'interno del rettangolo
             rel_x = mouse_pos[0] - self.rect.x
             rel_y = mouse_pos[1] - self.rect.y
-            
+
             # Se stiamo disegnando il glow, il rect attuale è più grande!
             # Dobbiamo sottrarre il raggio per calibrare le coordinate con la maschera originale.
             if self.image is self.glow_image:
                 rel_x -= self.glow_radius
                 rel_y -= self.glow_radius
-            
+
             # 3. Controllo collisione Pixel-Perfect
             try:
                 # get_at ritorna 1 se il pixel non è trasparente, 0 se è trasparente
@@ -295,7 +290,7 @@ class PNGButton(pg.sprite.Sprite):
                     actual_y + self.glow_radius,
                 )
             )
-            
+
     def is_clicked(self, event_list: list) -> bool:
         """Return whether a left-click occurred while hovered.
 

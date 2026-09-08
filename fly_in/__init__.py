@@ -1,4 +1,4 @@
-from src import Application, ApplicationException
+from .src import Application, ApplicationException
 
 
 __all__ = ["Application", "ApplicationException"]

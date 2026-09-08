@@ -7,6 +7,7 @@ from fly_in.src.validation_models import HubData
 if TYPE_CHECKING:
     from fly_in.src.drone import Drone
 
+
 class ZoneException(Exception):
     """Exception raised when a zone operation fails."""
 
@@ -18,7 +19,7 @@ class ZoneException(Exception):
         """
         self.msg = msg
         super().__init__(msg)
-    
+
     def __str__(self):
         """Return the exception message."""
         return self.msg
@@ -41,12 +42,12 @@ class Zone:
         self.__cost = self.__type.value
         self.__color = data.metadata.color
         self._tag = data.tag
-        
+
         max_d = data.metadata.max_drones
-        self.MAX_DRONES: Final[int] = max_d if not max_d == None else 1
+        self.MAX_DRONES: Final[int] = max_d if max_d is not None else 1
         self.__reservations: dict[int, int] = {}
 
-    ##### GETTERS #######
+    # GETTERS
     def get_name(self) -> str:
         """Return the zone name."""
         return self.__name
@@ -58,11 +59,11 @@ class Zone:
     def get_y(self) -> int:
         """Return the zone's vertical coordinate."""
         return self.__y
-    
+
     def get_cost(self) -> int:
         """Return the movement cost associated with the zone."""
         return self.__cost
-    
+
     def get_type(self) -> ZoneType:
         """Return the zone type."""
         return self.__type
@@ -70,7 +71,7 @@ class Zone:
     def get_color(self) -> ParsingColors:
         """Return the configured zone color."""
         return self.__color
-    
+
     def get_coordinates(self) -> tuple[int, int]:
         """Return the zone coordinates."""
         return (self.__x, self.__y)
@@ -85,8 +86,9 @@ class Zone:
             ZoneException: If the zone has no available capacity.
         """
         if not self.space_left():
-            raise ZoneException("Error: zone capacity is full, "
-                                      f"unable to insert drone '{drone.ID}'")
+            raise ZoneException(
+                f"Error: zone capacity is full, unable to insert drone '{drone.ID}'"
+            )
         self.__drones_in.append(drone)
         drone.set_where(self)
 
@@ -102,8 +104,10 @@ class Zone:
         try:
             self.__drones_in.remove(drone)
         except ValueError:
-            raise ZoneException(f"Error: drone '{drone.ID}' is not present in"
-                                f"zone '{self.__name}', unable to get it out")
+            raise ZoneException(
+                f"Error: drone '{drone.ID}' is not present in"
+                f"zone '{self.__name}', unable to get it out"
+            )
         drone.set_where(None)
 
     def space_left(self) -> int:
@@ -123,7 +127,7 @@ class Zone:
         """
         if self._tag in [Tag.START_HUB, Tag.END_HUB]:
             return 999999
-        
+
         reserved = self.__reservations.get(turn, 0)
         return self.MAX_DRONES - reserved
 
@@ -137,5 +141,8 @@ class Zone:
             Exception: If the zone has no capacity at the requested turn.
         """
         if self.space_left_at(turn) <= 0:
-            raise Exception(f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}")
+            raise Exception(
+                "Errore: impossibile prenotare la risorsa "
+                f"{self.get_name()} al turno {turn}"
+            )
         self.__reservations[turn] = self.__reservations.get(turn, 0) + 1

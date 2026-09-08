@@ -17,6 +17,7 @@ from typing import Callable
 
 _curr_path = ""
 
+
 class RenderException(Exception):
     """Exception raised when a rendering operation fails."""
 
@@ -28,10 +29,11 @@ class RenderException(Exception):
         """
         self.msg = msg
         super().__init__(msg)
-        
+
     def __str__(self) -> str:
         """Return the formatted rendering error."""
         return "Renderer Exception: " + self.msg
+
 
 class Renderer:
     """Manage pygame resources, layouts, and frame rendering."""
@@ -57,7 +59,7 @@ class Renderer:
         self.__scheduler: Scheduler
         self._load_resources()
         try:
-            img = self.sprites['drone']
+            img = self.sprites["drone"]
             self.__dr: DroneRenderer = DroneRenderer(img)
         except KeyError:
             raise RenderException("Couldn't find drone png resource")
@@ -73,7 +75,7 @@ class Renderer:
         if os.path.exists(_font_path):
             for file in os.listdir(_font_path):
                 font = pg.font.Font(os.path.join(_font_path, file), 24)
-                name = file.rsplit(".", 1)[0] # Prende il nome senza estensione
+                name = file.rsplit(".", 1)[0]  # Prende il nome senza estensione
                 self.fonts[name] = font
 
         # Backgrounds
@@ -81,47 +83,57 @@ class Renderer:
             for file in os.listdir(_bg_path):
                 bg = pg.image.load(os.path.join(_bg_path, file)).convert()
                 # Ridimensiona subito il background per evitare di farlo nel loop
-                bg = pg.transform.scale(bg, (self.WIDTH, self.HEIGHT)) 
+                bg = pg.transform.scale(bg, (self.WIDTH, self.HEIGHT))
                 name = file.rsplit(".", 1)[0]
                 self.backgrounds[name] = bg
 
         # Bottoni
         if os.path.exists(_btns_path):
             for file in os.listdir(_btns_path):
-                if file.endswith("png") or file.endswith("jpg")\
-                   and not file.startswith("."):
+                if (
+                    file.endswith("png")
+                    or file.endswith("jpg")
+                    and not file.startswith(".")
+                ):
                     name = file.rsplit(".", 1)[0]
                     try:
-                        button = PNGButton(os.path.join(_btns_path, file),
-                                            name=name, font=self.fonts['pixel'])
+                        button = PNGButton(
+                            os.path.join(_btns_path, file),
+                            name=name,
+                            font=self.fonts["pixel"],
+                        )
                     except KeyError:
-                        button = PNGButton(os.path.join(_btns_path, file),
-                                           name=name)
+                        button = PNGButton(os.path.join(_btns_path, file), name=name)
                     self.buttons[name] = button
-                
+
         # Sprites
         if os.path.exists(_sprites_path):
             for file in os.listdir(_sprites_path):
                 if file.endswith("png") or file.endswith("jpg"):
                     name = file.rsplit(".", 1)[0]
-                    sprite = pg.image.load(os.path.join(_sprites_path, file)).convert_alpha()
+                    sprite = pg.image.load(
+                        os.path.join(_sprites_path, file)
+                    ).convert_alpha()
                     sprite = pg.transform.scale(sprite, (50, 50))
                     self.sprites[name] = sprite
-    
+
     def get_active_buttons(self) -> pg.sprite.Group[PNGButton]:
         """Return the buttons currently displayed."""
-        return self. __active_buttons
-    
+        return self.__active_buttons
+
     def get_graph_surface(self) -> pg.Surface:
         """Return the transparent surface used for graph rendering."""
-        return self. __graph_surface
-                    
-    def create_btns(self, titles: list[str],
-                    button: PNGButton,
-                    start_y: int = 0,
-                    spacing_y: int = 0,
-                    centered: bool = True,
-                    start_x: int = 0) -> None:
+        return self.__graph_surface
+
+    def create_btns(
+        self,
+        titles: list[str],
+        button: PNGButton,
+        start_y: int = 0,
+        spacing_y: int = 0,
+        centered: bool = True,
+        start_x: int = 0,
+    ) -> None:
         """Create and position a button for each title.
 
         Args:
@@ -147,8 +159,7 @@ class Renderer:
             btn.add_text(t)
             self.__active_buttons.add(btn)
 
-    def render_mode(self, mode: Mode,
-                    _clicked: str) -> None:
+    def render_mode(self, mode: Mode, _clicked: str) -> None:
         """Build the UI layout for a mode.
 
         Args:
@@ -158,12 +169,12 @@ class Renderer:
         Raises:
             RenderException: If the mode cannot be rendered.
         """
-        self.__active_buttons.empty() # Rimuove i vecchi bottoni
+        self.__active_buttons.empty()  # Rimuove i vecchi bottoni
         if mode is None:
             raise RenderException("Invalid mode to render")
-        
+
         if "menu" in self.buttons:
-                _button: str = self.buttons["menu"]
+            _button: str = self.buttons["menu"]
         else:
             _button = PNGButton("")
         _maps_path = "fly_in/maps"
@@ -171,44 +182,46 @@ class Renderer:
         titles: list[str] = []
         start_y = self.HEIGHT // 2 - 100
         spacing_y = 100
-        centered= True
+        centered = True
         start_x = 150
 
         def __menu_layout() -> None:
             """Build the main menu button layout."""
             self.__graph = None
             titles = ["maps", "about", "quit"]
-            self.create_btns(titles, _button,
-                        start_y, spacing_y,
-                        centered, start_x)
-            
+            self.create_btns(titles, _button, start_y, spacing_y, centered, start_x)
+
         def __maps_layout() -> None:
             """Build the map-category selection layout."""
             titles = os.listdir(_maps_path)
-            titles = [dir for dir in titles if 
-                        os.path.isdir(os.path.join(_maps_path, dir))
-                        and not dir.startswith(".")]
+            titles = [
+                dir
+                for dir in titles
+                if os.path.isdir(os.path.join(_maps_path, dir))
+                and not dir.startswith(".")
+            ]
             titles.append("back")
             centered = False
             start_y = 150
-            self.create_btns(titles, _button, start_y, spacing_y,
-                        centered, start_x)
-            
+            self.create_btns(titles, _button, start_y, spacing_y, centered, start_x)
+
         def __about_layout() -> None:
             """Build the about-screen layout."""
             nonlocal start_y
             titles = ["back"]
             start_y = start_y + self.HEIGHT // 3
-            self.create_btns(titles, _button, start_y,
-                        spacing_y, centered, start_x)
-            
+            self.create_btns(titles, _button, start_y, spacing_y, centered, start_x)
+
         def __levels_layout() -> None:
             """Build the level selection layout for the chosen map category."""
             global _curr_path
             _curr_path = os.path.join(_maps_path, _clicked)
             for filename in os.listdir(_curr_path):
-                if os.path.isfile(os.path.join(_curr_path, filename)) and filename.endswith(".txt")\
-                   and not filename.startswith("."):
+                if (
+                    os.path.isfile(os.path.join(_curr_path, filename))
+                    and filename.endswith(".txt")
+                    and not filename.startswith(".")
+                ):
                     name = filename.rsplit(".")[0]
                     titles.append(name)
             titles.append("back")
@@ -218,15 +231,13 @@ class Renderer:
                 _button = PNGButton("")
             start_y = 150
             centered = False
-            self.create_btns(titles, _button,
-                        start_y, spacing_y,
-                        centered, start_x)
-        
+            self.create_btns(titles, _button, start_y, spacing_y, centered, start_x)
+
         def __flying_layout() -> None:
             """Load the selected level and initialize its schedule."""
             global _curr_path
             _curr_path = os.path.join(_curr_path, _clicked + ".txt")
-            titles  = ["back"]
+            titles = ["back"]
             start_y = self.SCREEN.get_height() // 10 * 9
             self.create_btns(titles, _button, start_y)
             if not self.__graph:
@@ -247,12 +258,18 @@ class Renderer:
         # SMISTAMENTO
         try:
             match mode:
-                case Mode.MENU: __menu_layout()
-                case Mode.MAPS: __maps_layout()
-                case Mode.ABOUT: __about_layout()
-                case Mode.LEVELS: __levels_layout()
-                case Mode.FLYING: __flying_layout()
-                case _: self.render_mode(Mode.NONE, "")
+                case Mode.MENU:
+                    __menu_layout()
+                case Mode.MAPS:
+                    __maps_layout()
+                case Mode.ABOUT:
+                    __about_layout()
+                case Mode.LEVELS:
+                    __levels_layout()
+                case Mode.FLYING:
+                    __flying_layout()
+                case _:
+                    self.render_mode(Mode.NONE, "")
         except RenderException as e:
             raise e
 
@@ -273,10 +290,15 @@ class Renderer:
             if not self.__graph_surface:
                 raise RenderException("Unexistent graph to draw")
             self.__graph_surface.fill((0, 0, 0, 0))
-            self.ft_mapping = GraphRenderer.drawGraph(self.__graph, self.__graph_surface, self.sprites)
+            self.ft_mapping = GraphRenderer.drawGraph(
+                self.__graph, self.__graph_surface, self.sprites
+            )
             self.__dr.drawDrones(self.__graph_surface, self.__graph, self.ft_mapping)
             graph_rect = self.__graph_surface.get_rect()
-            graph_rect.center = self.SCREEN.get_width() // 2, self.SCREEN.get_height() // 2
+            graph_rect.center = (
+                self.SCREEN.get_width() // 2,
+                self.SCREEN.get_height() // 2,
+            )
             self.SCREEN.blit(self.__graph_surface, graph_rect)
 
             # rendering info testo info mappa
@@ -284,16 +306,19 @@ class Renderer:
                 font = self.fonts["pixel"]
             except KeyError:
                 font = pg.font.Font("Arial")
-            text = font.render(f"Total drones: {self.__graph.get_nb_drones()} --- "
-                                      f"Total Turns: {self.__scheduler.TURNS} --- "
-                                      f"Current Turn: {self.__current_turn - 1}",
-                                      True, (255, 255, 255))
+            text = font.render(
+                f"Total drones: {self.__graph.get_nb_drones()} --- "
+                f"Total Turns: {self.__scheduler.TURNS} --- "
+                f"Current Turn: {self.__current_turn - 1}",
+                True,
+                (255, 255, 255),
+            )
             text_rect = text.get_rect(topleft=(50, 50))
             self.SCREEN.blit(text, text_rect)
 
         # Disegna tutti gli sprite attivi
         self.__active_buttons.draw(self.SCREEN)
-        
+
     def _update(self, mode: Mode) -> None:
         """Advance sprites and flying-mode turn animation.
 
@@ -301,10 +326,10 @@ class Renderer:
             mode (Mode): Mode currently being updated.
         """
         self.__active_buttons.update()
-        
+
         if mode == Mode.FLYING:
-           if self.__graph and self.__scheduler:
-                if not hasattr(self, '_Renderer__turn_timer'):
+            if self.__graph and self.__scheduler:
+                if not hasattr(self, "_Renderer__turn_timer"):
                     self.__turn_timer = 0
                     self.__current_turn = 1
 
@@ -324,7 +349,7 @@ class Renderer:
                         else:
                             # se un drone non ha azioni (es. percorso vuoto), lo teniamo fermo
                             drone.set_where(drone.get_where())
-                
+
                 # Calcola il progresso basato sui frame correnti
                 progress = self.__turn_timer / self.FPS
                 for drone in self.__graph.get_drones():
@@ -332,13 +357,13 @@ class Renderer:
 
                 # Scatta un frame
                 self.__turn_timer += 1
-                
+
                 # Quando il timer raggiunge gli FPS, il turno è finito
                 if self.__turn_timer >= self.FPS:
                     self.__turn_timer = 0
                     if self.__current_turn <= self.__scheduler.TURNS:
                         self.__current_turn += 1
-                    
+
                     # Carica le mosse per il nuovo turno
                     for drone in self.__graph.get_drones():
                         target_res = drone.get_action_at_turn(self.__current_turn)[1]
@@ -352,14 +377,18 @@ class Renderer:
         """Present the rendered frame and throttle to the target FPS."""
         pg.display.flip()
         self.CLOCK.tick(60)
-                    
+
+
 class GraphRenderer:
     """Render graph connections and zones onto pygame surfaces."""
 
     @classmethod
-    def drawConnection(cls, conn: Connection,
-                    surface: pg.Surface,
-                    normalizer_funct: Callable | None=None) -> None:
+    def drawConnection(
+        cls,
+        conn: Connection,
+        surface: pg.Surface,
+        normalizer_funct: Callable | None = None,
+    ) -> None:
         """Draw a connection line on a surface.
 
         Args:
@@ -377,13 +406,16 @@ class GraphRenderer:
             start = normalizer_funct(xa, ya)
             end = normalizer_funct(xb, yb)
         pg.draw.line(surface, color, start, end, 2)
-    
+
     @classmethod
-    def drawZone(cls, zone: Zone,
-                surface: pg.Surface,
-                normalizer_funct: Callable | None=None,
-                img: pg.Surface | None = None,
-                radius: int=30) -> None:
+    def drawZone(
+        cls,
+        zone: Zone,
+        surface: pg.Surface,
+        normalizer_funct: Callable | None = None,
+        img: pg.Surface | None = None,
+        radius: int = 30,
+    ) -> None:
         """Draw a zone as a circle or sprite.
 
         Args:
@@ -395,7 +427,7 @@ class GraphRenderer:
         """
         color = zone.get_color().value
         x, y = zone.get_coordinates()
-        center = (x,y)
+        center = (x, y)
         if normalizer_funct:
             center = normalizer_funct(x, y)
         if img is None:
@@ -403,12 +435,14 @@ class GraphRenderer:
         else:
             img_rect = img.get_rect(center=center)
             surface.blit(img, img_rect)
-    
+
     @classmethod
-    def drawGraph(cls, graph: Graph,
-                surface: pg.Surface,
-                sprites: dict[str, pg.Surface] | None = None) -> Callable[[int, int],
-                                                            tuple[int, int]]:
+    def drawGraph(
+        cls,
+        graph: Graph,
+        surface: pg.Surface,
+        sprites: dict[str, pg.Surface] | None = None,
+    ) -> Callable[[int, int], tuple[int, int]]:
         """Draw all graph connections and zones.
 
         Args:
@@ -419,9 +453,9 @@ class GraphRenderer:
         Returns:
             Callable[[int, int], tuple[int, int]]: Coordinate mapper used.
         """
-        to_screen: Callable = calcola_trasformazione(graph.get_zones(),
-                                                        surface.get_width(),
-                                                        surface.get_height())
+        to_screen: Callable = calcola_trasformazione(
+            graph.get_zones(), surface.get_width(), surface.get_height()
+        )
         for c in graph.get_connections():
             cls.drawConnection(c, surface, to_screen)
         img: pg.Surface
@@ -434,8 +468,8 @@ class GraphRenderer:
                 else:
                     img = sprites.get(z.get_type().getName())
             cls.drawZone(z, surface, to_screen, img)
-        
-        #ritorno la funzione di calcolo per poi poter posizionare i droni con le giuste coordinate
+        # ritorno la funzione di calcolo per poi poter posizionare
+        # i droni con le giuste coordinate
         return to_screen
 
 
@@ -450,11 +484,14 @@ class DroneRenderer:
         """
         self.img = img
 
-        self.img = pg.transform.scale(self.img, (80, 50)) 
-    
-    def drawDrone(self, screen: pg.Surface,
-                d: Drone,
-                ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+        self.img = pg.transform.scale(self.img, (80, 50))
+
+    def drawDrone(
+        self,
+        screen: pg.Surface,
+        d: Drone,
+        ft_mapping: Callable[[int, int], tuple[int, int]] = None,
+    ) -> None:
         """Draw one drone at its interpolated position.
 
         Args:
@@ -464,8 +501,9 @@ class DroneRenderer:
                 Coordinate mapper.
         """
         import math
+
         x, y = DroneRenderer._get_render_coordinates(d)
-        
+
         if ft_mapping:
             x1, y1 = ft_mapping(x, y)
         else:
@@ -475,11 +513,11 @@ class DroneRenderer:
             drone_index = int(d.ID[1:])
         except ValueError:
             drone_index = 0
-            
+
         # Parametri dell'offset
-        offset_radius = 15 # Distanza in pixel dal vero centro
+        offset_radius = 15  # Distanza in pixel dal vero centro
         angle = drone_index * 1.5
-        
+
         offset_x = math.cos(angle) * offset_radius
         offset_y = math.sin(angle) * offset_radius
 
@@ -488,9 +526,13 @@ class DroneRenderer:
 
         img_rect = self.img.get_rect(center=(final_x, final_y))
         screen.blit(self.img, img_rect)
-    
-    def drawDrones(self, screen: pg.Surface, graph: Graph,
-                ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+
+    def drawDrones(
+        self,
+        screen: pg.Surface,
+        graph: Graph,
+        ft_mapping: Callable[[int, int], tuple[int, int]] = None,
+    ) -> None:
         """Draw every drone in a graph.
 
         Args:
@@ -502,10 +544,10 @@ class DroneRenderer:
         for d in graph.get_drones():
             self.drawDrone(screen, d, ft_mapping)
 
-
     @staticmethod
     def _get_render_coordinates(drone: Drone) -> tuple[float, float]:
-        """Interpolate a drone position between its previous and current target.
+        """Interpolate a drone position between its previous
+        and current target.
 
         Args:
             drone (Drone): Drone whose position should be calculated.
@@ -515,9 +557,9 @@ class DroneRenderer:
         """
         if not drone.get_where():
             return (0.0, 0.0)
-            
+
         end_x, end_y = drone.get_where().get_coordinates()
-        
+
         # Se il drone è fermo o non ha una posizione precedente
         if not drone.get_last_pos() or drone.get_where() == drone.get_last_pos():
             return (end_x, end_y)
@@ -527,5 +569,5 @@ class DroneRenderer:
         # Interpolazione lineare
         curr_x = start_x + (end_x - start_x) * drone.progress
         curr_y = start_y + (end_y - start_y) * drone.progress
-        
+
         return (curr_x, curr_y)

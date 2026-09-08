@@ -6,6 +6,7 @@ from fly_in.src.zone import Zone
 if TYPE_CHECKING:
     from fly_in.src.connection import Connection
 
+
 class Drone:
     """Represent a drone and its scheduled movement path."""
 
@@ -18,7 +19,7 @@ class Drone:
         self.__last_pos: Zone | Connection = None
         Drone._counter += 1
         self.progress = 0.0
-        self.path: list[tuple[Action, Zone | Connection, int]]= []
+        self.path: list[tuple[Action, Zone | Connection, int]] = []
 
     def set_where(self, where: Zone | Connection | None) -> None:
         """Update the drone location while retaining its previous location.
@@ -28,7 +29,7 @@ class Drone:
         """
         self.__last_pos = self.__where
         self.__where = where
-        
+
     def set_last_pos(self, where: Zone | Connection | None) -> None:
         """Set the drone's previous location.
 
@@ -37,19 +38,18 @@ class Drone:
         """
         self.__last_pos = where
 
-
     def get_where(self) -> Zone | Connection:
         """Return the drone's current location."""
         return self.__where
-    
+
     def get_last_pos(self) -> Zone | Connection:
         """Return the drone's previous location."""
         return self.__last_pos
-    
+
     def get_coordinates(self) -> tuple[float, float]:
         """Return the current location coordinates, or the origin if unset."""
         where = self.get_where()
-        
+
         if where:
             return where.get_coordinates()
         return (0.0, 0.0)
@@ -68,7 +68,7 @@ class Drone:
             if t == turn:
                 return (a, r, t)
         return (Action.NONE, None, 0)
-            
+
     def set_path(self, path: list[tuple[Action, Zone | Connection, int]]) -> None:
         """Replace the drone's scheduled path.
 
@@ -83,7 +83,7 @@ class Drone:
         if isinstance(where, Zone):
             return where == Tag.END_HUB
         return False
-    
+
     def at_start(self) -> bool:
         """Return whether the drone is currently at the start hub."""
         where = self.get_where()
@@ -91,8 +91,6 @@ class Drone:
             return where == Tag.START_HUB
         return False
 
-
-    
     @classmethod
     def zeroCounter(cls) -> None:
         """Reset the class-wide drone identifier counter."""

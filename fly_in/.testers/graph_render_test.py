@@ -10,10 +10,10 @@ def test_graph_rendering(graph: Graph):
 
     pg.display.set_caption(f"{graph.get_name()} rendering test by lixi")
     screen = pg.display.set_mode()
-    background = pg.image.load("fly_in/src/rendering/"
-                               "resources/bg/latios.jpg").convert()
-    background = pg.transform.scale(background, (screen.get_width(),
-                                                 screen.get_height()))
+    background = pg.image.load("fly_in/src/rendering/resources/bg/latios.jpg").convert()
+    background = pg.transform.scale(
+        background, (screen.get_width(), screen.get_height())
+    )
     screen.blit(background, (0, 0))
     graph_sourface = pg.Surface((1500, 900), flags=pg.SRCALPHA)
     graph_rect = graph_sourface.get_rect()
@@ -37,10 +37,10 @@ if __name__ == "__main__":
     dir_path = "fly_in/maps/easy/"
     parser: Parser = Parser
     try:
-        file_list = [f for f in os.listdir(dir_path) if f.endswith('.txt')]
+        file_list = [f for f in os.listdir(dir_path) if f.endswith(".txt")]
     except OSError as e:
         raise e
     print(file_list)
     for f in file_list:
-        graph = parser.parse_map(dir_path+f)
+        graph = parser.parse_map(dir_path + f)
         test_graph_rendering(graph)

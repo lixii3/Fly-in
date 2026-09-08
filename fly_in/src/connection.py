@@ -8,6 +8,8 @@ from pydantic import ValidationError
 if TYPE_CHECKING:
     from fly_in.src.zone import Zone
     from fly_in.src.drone import Drone
+
+
 class ConnectionException(Exception):
     """Exception raised when a connection operation fails."""
 
@@ -29,8 +31,14 @@ class Connection:
     """Represent a link between two zones and its turn reservations."""
 
     @overload
-    def __init__(self, name: str, zoneA: Zone, zoneB: Zone,
-                 color: str, max_link_capacity: int = 1) -> None:
+    def __init__(
+        self,
+        name: str,
+        zoneA: Zone,
+        zoneB: Zone,
+        color: str,
+        max_link_capacity: int = 1,
+    ) -> None:
         """Create a connection from endpoint zones and display settings."""
         try:
             metadata: MetaData = MetaData(
@@ -86,7 +94,7 @@ class Connection:
     def get_zoneB(self) -> Zone:
         """Return the second endpoint zone."""
         return self.__arch[1]
-    
+
     def get_coordinates(self) -> tuple[int, int]:
         """Return the midpoint coordinates of the endpoint zones."""
         xa, ya = self.get_zoneA().get_coordinates()
@@ -116,5 +124,7 @@ class Connection:
             ConnectionException: If the connection is at capacity.
         """
         if self.space_left_at(turn) <= 0:
-            raise ConnectionException(f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}")
+            raise ConnectionException(
+                f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}"
+            )
         self.__reservations[turn] = self.__reservations.get(turn, 0) + 1

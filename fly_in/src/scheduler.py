@@ -21,6 +21,7 @@ class SchedulerException(Exception):
         """Return the formatted exception message."""
         return "SchedulerException: " + self.msg
 
+
 class Scheduler:
     """Assign capacity-aware paths and produce turn output."""
 
@@ -45,24 +46,28 @@ class Scheduler:
         drone: Drone
         resource: Zone | Connection
         for drone in self.__graph.get_drones():
-            path = self.__graph.get_min_cost_path(self.__graph.get_start(), self.__graph.get_end(), start_turn=0)
+            path = self.__graph.get_min_cost_path(
+                self.__graph.get_start(), self.__graph.get_end(), start_turn=0
+            )
 
             if path:
                 # Assegna il percorso al drone
                 drone.set_path(path)
 
-                # Effettua le prenotazioni fisiche su Zone e Connection per bloccare gli altri
+                # Effettua le prenotazioni fisiche su Zone e Connection
+                # per bloccare gli altri
                 for _, resource, turn in path:
                     try:
                         resource.reserve(turn)
                     except (ConnectionException, ZoneException) as e:
                         raise SchedulerException(str(e))
             else:
-                raise SchedulerException(f"Errore: nessun percorso trovato per {drone.ID}")
+                raise SchedulerException(
+                    f"Errore: nessun percorso trovato per {drone.ID}"
+                )
 
         self.TURNS = self.__generate_output_file()
         print(f"Total turns: {self.TURNS}")
-
 
     def __generate_output_file(self, filename: str = "output.txt") -> int:
         """Write scheduled moves to a turn-by-turn output file.
@@ -110,7 +115,8 @@ class Scheduler:
             raise SchedulerException(str(e[0]))
         return lines
 
-#if __name__ == "__main__":
+
+# if __name__ == "__main__":
 #    from fly_in.src.parser import Parser
 #    dir_path = "fly_in/maps/hard/01_maze_nightmare.txt"
 #

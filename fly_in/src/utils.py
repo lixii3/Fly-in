@@ -16,6 +16,8 @@ class FlyInException(Exception):
     def __str__(self) -> None:
         """Return the formatted exception message."""
         return f"FlyInException: {self.msg}"
+
+
 class Tag(Enum):
     """Tags identifying map declarations."""
 
@@ -35,6 +37,7 @@ class Tag(Enum):
             Tag | None: Matching member, or None when unknown.
         """
         return cls.__members__.get(tag.upper())
+
 
 class ZoneType(Enum):
     """Movement-cost categories for zones."""
@@ -59,6 +62,8 @@ class ZoneType(Enum):
     def getName(self) -> str:
         """Return the lower-case name used by rendering resources."""
         return self.name.lower()
+
+
 class ParsingColors(Enum):
     """Colors accepted in map metadata."""
 
@@ -89,6 +94,7 @@ class ParsingColors(Enum):
         """
         return cls.__members__.get(color.upper(), ParsingColors.WHITE)
 
+
 class Mode(Enum):
     """Screens available in the application UI."""
 
@@ -98,14 +104,15 @@ class Mode(Enum):
     ABOUT = "about"
     LEVELS = "levels"
     FLYING = "flying"
-    
-    
+
     def get_back(self) -> Mode:
         """Return the UI mode shown when navigating back."""
         match self:
-            case Mode.LEVELS: return Mode.MAPS
-            case _: return self.MENU
-    
+            case Mode.LEVELS:
+                return Mode.MAPS
+            case _:
+                return self.MENU
+
     @classmethod
     def get(cls, mode: str):
         """Convert a mode string to a mode enum member.
@@ -117,8 +124,8 @@ class Mode(Enum):
             Mode: Matching mode, or ``Mode.NONE`` when unknown.
         """
         return cls.__members__.get(mode.upper(), Mode.NONE)
-    
-    
+
+
 class Action(Enum):
     """Actions a drone can perform during a turn."""
 

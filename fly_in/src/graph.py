@@ -8,7 +8,8 @@ from fly_in.src.zone import Zone
 from fly_in.src.drone import Drone
 
 
-coso = Optional[List[Tuple[Action,Zone | Connection, int]]]
+coso = Optional[List[Tuple[Action, Zone | Connection, int]]]
+
 
 class GraphException(Exception):
     """Exception raised when a graph operation fails."""
@@ -64,19 +65,19 @@ class Graph:
     def get_name(self) -> str:
         """Return the graph name."""
         return self.__name
-    
+
     def get_nb_drones(self) -> int:
         """Return the number of drones configured for the graph."""
         return self.__nb_drones
 
-    def get_zones(self) -> List['Zone']:
+    def get_zones(self) -> List["Zone"]:
         """Return all zones in the graph."""
         return self.__zones
-    
+
     def get_start(self) -> Zone:
         """Return the graph's start hub."""
         return self.__start
-    
+
     def get_end(self) -> Zone:
         """Return the graph's end hub."""
         return self.__end
@@ -84,7 +85,7 @@ class Graph:
     def get_connections(self) -> List[Connection]:
         """Return all graph connections."""
         return self.__connections
-    
+
     def get_zone_connections(self, zone: Zone) -> List[Zone]:
         """Return zones directly connected to a zone.
 
@@ -111,13 +112,15 @@ class Graph:
         try:
             self.__connections.remove(conn)
         except ValueError:
-            GraphException(f"Error: unexistant '{conn.get_name()}' connection"
-                           f"in graph '{self.__name}'")
-    
+            GraphException(
+                f"Error: unexistant '{conn.get_name()}' connection"
+                f"in graph '{self.__name}'"
+            )
+
     def get_drones(self) -> List[Drone]:
         """Return all drones assigned to the graph."""
         return self.__drones
-    
+
     def add_drone(self, drone: Drone) -> None:
         """Add a drone and place it at the start hub.
 
@@ -131,7 +134,6 @@ class Graph:
             raise GraphException(f"Drone '{drone.ID}' already in graph '{self.__name}'")
         drone.set_where(self.get_start())
         self.__drones.append(drone)
-    
 
     def remove_zone(self, zone: Connection) -> None:
         """Remove a zone and its incident connections.
@@ -142,8 +144,9 @@ class Graph:
         try:
             self.__zones.remove(zone)
         except ValueError:
-            GraphException(f"Error: unexistant '{zone.get_name()}' zone"
-                           f"in graph '{self.__name}'")
+            GraphException(
+                f"Error: unexistant '{zone.get_name()}' zonein graph '{self.__name}'"
+            )
         for c in self.__connections:
             if c.get_zoneA() == zone or c.get_zoneB() == zone:
                 try:
@@ -153,11 +156,7 @@ class Graph:
 
     def graphInfo(self) -> str:
         """Return a human-readable description of the graph."""
-        lines = [
-            f"Graph: {self.__name}",
-            f"Drones: {self.__nb_drones}",
-            "Zones:"
-        ]
+        lines = [f"Graph: {self.__name}", f"Drones: {self.__nb_drones}", "Zones:"]
 
         for zone in self.__zones:
             lines.append(
@@ -203,10 +202,10 @@ class Graph:
             int: Sum of absolute coordinate differences.
         """
         return abs(zoneA.get_x() - zoneB.get_x()) + abs(zoneA.get_y() - zoneB.get_y())
-    
-    def get_min_cost_path(self, start_zone: Zone,
-                          end_zone: Zone,
-                          start_turn: int = 0) -> Optional[List[Tuple[Action, Zone | Connection, int]]]:
+
+    def get_min_cost_path(
+        self, start_zone: Zone, end_zone: Zone, start_turn: int = 0
+    ) -> Optional[List[Tuple[Action, Zone | Connection, int]]]:
         """Find a capacity-aware minimum-cost path between two zones.
 
         Args:
@@ -221,16 +220,25 @@ class Graph:
         """
         import heapq
 
-        queue: List[Tuple[float, int, int, float, str, Zone, Tuple[Action, Zone | Connection, int]] ]= []
+        queue: List[
+            Tuple[
+                float, int, int, float, str, Zone, Tuple[Action, Zone | Connection, int]
+            ]
+        ] = []
         counter = 0
 
         start_h = float(self.manhattan_distance(start_zone, end_zone))
-        heapq.heappush(queue, (start_h, counter, start_turn, 0.0, start_zone.get_name(), start_zone, []))
+        heapq.heappush(
+            queue,
+            (start_h, counter, start_turn, 0.0, start_zone.get_name(), start_zone, []),
+        )
 
         visited: set[tuple[str, int]] = set()
 
         while queue:
-            f_cost, _, current_turn, g_cost, _, current_zone, path = heapq.heappop(queue)
+            f_cost, _, current_turn, g_cost, _, current_zone, path = heapq.heappop(
+                queue
+            )
 
             if current_zone == end_zone:
                 return path
@@ -244,69 +252,85 @@ class Graph:
             if current_zone.space_left_at(current_turn + 1) > 0:
                 next_path = path + [(Action.WAIT, current_zone, current_turn + 1)]
                 counter += 1
-                heapq.heappush(queue, (
-                    f_cost + 1.0,        
-                    counter,
-                    current_turn + 1,    # Il turno + 1
-                    g_cost + 1.0,        # Il costo + 1
-                    current_zone.get_name(),
-                    current_zone,
-                    next_path,
-                ))
+                heapq.heappush(
+                    queue,
+                    (
+                        f_cost + 1.0,
+                        counter,
+                        current_turn + 1,  # Il turno + 1
+                        g_cost + 1.0,  # Il costo + 1
+                        current_zone.get_name(),
+                        current_zone,
+                        next_path,
+                    ),
+                )
 
             for conn in self.get_links(current_zone):
-                neighbor = conn.get_zoneA() if conn.get_zoneB() == current_zone else conn.get_zoneB()
+                neighbor = (
+                    conn.get_zoneA()
+                    if conn.get_zoneB() == current_zone
+                    else conn.get_zoneB()
+                )
 
                 if neighbor.get_type().name == "BLOCKED":
                     continue
 
-                move_cost = float(neighbor.get_cost()) # Può essere 1.0, 2.0 o 0.9999
+                move_cost = float(neighbor.get_cost())  # Può essere 1.0, 2.0 o 0.9999
 
                 # OPZIONE 2: MOVE (zone normal e priority)
                 if move_cost <= 1.0:
                     if neighbor.space_left_at(current_turn + 1) > 0:
                         next_path = path + [(Action.MOVE, neighbor, current_turn + 1)]
                         counter += 1
-                        new_turn = current_turn + 1 
-                        new_g_cost = g_cost + move_cost  
-                        
+                        new_turn = current_turn + 1
+                        new_g_cost = g_cost + move_cost
+
                         h_cost = float(self.manhattan_distance(neighbor, end_zone))
                         new_f_cost = new_g_cost + h_cost
 
-                        heapq.heappush(queue, (
-                            new_f_cost,
-                            counter,
-                            new_turn,    
-                            new_g_cost,
-                            neighbor.get_name(),
-                            neighbor,
-                            next_path,
-                        ))
+                        heapq.heappush(
+                            queue,
+                            (
+                                new_f_cost,
+                                counter,
+                                new_turn,
+                                new_g_cost,
+                                neighbor.get_name(),
+                                neighbor,
+                                next_path,
+                            ),
+                        )
 
                 # OPZIONE 3: TRANSIT (zone restricted)
                 elif move_cost == 2.0:
-                    if conn.space_left_at(current_turn + 1) > 0 and neighbor.space_left_at(current_turn + 2) > 0:
+                    if (
+                        conn.space_left_at(current_turn + 1) > 0
+                        and neighbor.space_left_at(current_turn + 2) > 0
+                    ):
                         next_path = path + [
                             (Action.TRANSIT, conn, current_turn + 1),
                             (Action.MOVE, neighbor, current_turn + 2),
                         ]
                         counter += 1
-                        
+
                         # Movimento lungo 2 turni interi
                         new_turn = current_turn + 2
                         new_g_cost = g_cost + 2.0
-                        
+
                         h_cost = float(self.manhattan_distance(neighbor, end_zone))
                         new_f_cost = new_g_cost + h_cost
 
-                        heapq.heappush(queue, (
-                            new_f_cost,
-                            counter,
-                            new_turn,
-                            new_g_cost,
-                            neighbor.get_name(),
-                            neighbor,
-                            next_path,
-                        ))
+                        heapq.heappush(
+                            queue,
+                            (
+                                new_f_cost,
+                                counter,
+                                new_turn,
+                                new_g_cost,
+                                neighbor.get_name(),
+                                neighbor,
+                                next_path,
+                            ),
+                        )
 
         return None

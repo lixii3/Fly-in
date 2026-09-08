@@ -20,32 +20,35 @@ class MetaData(BaseModel):
         if self.tag == Tag.CONNECTION and not self.max_link_capacity:
             self.max_link_capacity = 1
         if not self.tag == Tag.CONNECTION and self.max_link_capacity:
-            raise ValueError("hubs expect "
-                             "'max_link_capacity' field to be None")
-        if (self.tag == Tag.START_HUB or
-            self.tag == Tag.END_HUB):
-            if (self.max_drones and self.max_drones < self.nb_drones) or self.max_drones == 0:
-                raise ValueError("Max drone capacity is forbidden for hub of typ estart/end")
+            raise ValueError("hubs expect 'max_link_capacity' field to be None")
+        if self.tag == Tag.START_HUB or self.tag == Tag.END_HUB:
+            if (
+                self.max_drones and self.max_drones < self.nb_drones
+            ) or self.max_drones == 0:
+                raise ValueError(
+                    "Max drone capacity is forbidden for hub of type estart/end"
+                )
             # start e end devono essere normal
             if self.z_type is None:
                 self.z_type = ZoneType.NORMAL
             elif self.z_type != ZoneType.NORMAL:
-                raise ValueError("Start / end "
-                                "must be normal zones")
+                raise ValueError("Start / end must be normal zones")
 
-        if self.tag == Tag.CONNECTION and\
-                (self.z_type or self.max_drones):
-            raise ValueError("'connection' type_data expects "
-                             "fields 'max_drones' and 'zone' to be None")
+        if self.tag == Tag.CONNECTION and (self.z_type or self.max_drones):
+            raise ValueError(
+                "'connection' type_data expects "
+                "fields 'max_drones' and 'zone' to be None"
+            )
         if self.z_type == ZoneType.BLOCKED:
             self.max_drones = 0
-        elif self.z_type == None and self.tag != Tag.CONNECTION:
+        elif self.z_type is None and self.tag != Tag.CONNECTION:
             self.z_type = ZoneType.NORMAL
         return self
 
 
 class HubData(BaseModel):
     """Validated hub declaration from a map file."""
+
     tag: Tag
     name: str = Field(min_length=1)
     x: int = -1
@@ -59,7 +62,7 @@ class HubData(BaseModel):
         if self.tag == Tag.CONNECTION:
             raise ValueError("Invalid value for tag")
         # se il nome contiene spazi o un dash
-        elif ' ' in self.name or '-' in self.name:
+        elif " " in self.name or "-" in self.name:
             raise ValueError("Hub name can't contain spaces or dashes")
         if not self.metadata:
             max_d: int | None
@@ -67,7 +70,9 @@ class HubData(BaseModel):
                 max_d = 1
             else:
                 max_d = None
-            self.metadata = MetaData(tag=self.tag, z_type=ZoneType.NORMAL, max_drones=max_d)
+            self.metadata = MetaData(
+                tag=self.tag, z_type=ZoneType.NORMAL, max_drones=max_d
+            )
         # se contiene metadata di tipo connection
         elif self.metadata and self.metadata.tag == Tag.CONNECTION:
             raise ValueError(f"Invalid metadata for hub: '{self.name}'")
@@ -76,6 +81,7 @@ class HubData(BaseModel):
 
 class ConnectionData(BaseModel):
     """Validated connection declaration from a map file."""
+
     tag: Tag = Tag.CONNECTION
     name: str = Field(min_length=3)
     metadata: MetaData | None = None
@@ -88,23 +94,24 @@ class ConnectionData(BaseModel):
         self.name = self.name.strip()
         if not self.tag == Tag.CONNECTION:
             raise ValueError("Tag must be of type ParsingTags.CONNECTION")
-        elif ' ' in self.name or self.name.count('-') != 1:
-            raise ValueError("Connection name can't contain spaces "
-                             "and must contain exactly one dash")
+        elif " " in self.name or self.name.count("-") != 1:
+            raise ValueError(
+                "Connection name can't contain spaces and must contain exactly one dash"
+            )
         elif self.metadata and not self.metadata.tag == Tag.CONNECTION:
             raise ValueError(f"Invalid metadata for connection: '{self.name}'")
         if not self.metadata:
             self.metadata = MetaData(tag=Tag.CONNECTION, max_link_capacity=1)
-        self.zoneA = self.name.split('-')[0]
-        self.zoneB = self.name.split('-')[1]
-        if not self.zoneA or not self.zoneB or\
-            (self.zoneA == self.zoneB):
-            raise ValueError('Invalid self connection')
+        self.zoneA = self.name.split("-")[0]
+        self.zoneB = self.name.split("-")[1]
+        if not self.zoneA or not self.zoneB or (self.zoneA == self.zoneB):
+            raise ValueError("Invalid self connection")
         return self
 
 
 class MapData(BaseModel):
     """Validated complete map definition."""
+
     name: str = Field(min_length=1)
     nb_drones: int = Field(ge=0)
     hubs: List[HubData] = Field(min_length=2)
@@ -121,7 +128,7 @@ class MapData(BaseModel):
 
         links = list(zip(connA, connB))
         visti: set[tuple[str, str]] = set()
-        
+
         # check for duplicated connections
         for ln in links:
             l1: tuple[str, str] = tuple(sorted(ln))
@@ -142,7 +149,6 @@ class MapData(BaseModel):
                 raise ValueError(f"Duplicated hub name in map: '{h.name}")
 
         if has_start != 1 or has_end != 1:
-            raise ValueError("Map should have exactly one start "
-                             "and one end hub")
+            raise ValueError("Map should have exactly one start and one end hub")
 
         return self

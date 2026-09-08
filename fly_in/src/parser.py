@@ -8,8 +8,9 @@ from pydantic import ValidationError
 class ParsingException(Exception):
     """Exception raised for an invalid map declaration."""
 
-    def __init__(self, map_name: str = "", line: int = -1, msg: str | None = None,
-                 fmsg: str = ""):
+    def __init__(
+        self, map_name: str = "", line: int = -1, msg: str | None = None, fmsg: str = ""
+    ):
         """Initialize a parsing error with optional map and line context.
 
         Args:
