@@ -22,6 +22,12 @@ class Application:
 
     @classmethod
     def run(cls) -> None:
+        """It starts the application loop.
+
+        Raises:
+            ApplicationException
+            ApplicationException
+        """        
         cls.MODE = Mode.MENU
         try:
             cls.__renderer = Renderer()
@@ -42,7 +48,13 @@ class Application:
         pg.quit()
 
     @classmethod
-    def _handle_events(cls, events: list) -> None:
+    def _handle_events(cls, events: list[pg.event.Event]) -> None:
+        """_It handles active events by redirecting their manageing
+        to other specific custom methods._
+
+        Args:
+            events (list[pygame.event.Event]): list of pygame events.
+        """        
         for event in events:
             if event.type == pg.QUIT:
                 cls.__running = False
@@ -61,6 +73,15 @@ class Application:
 
     @classmethod
     def _click(cls, event_name: str) -> None:
+        """_Checks if the event is a button being clicked
+        and acts accordingly._
+
+        Args:
+            event_name (str): name of the active event.
+
+        Raises:
+            ApplicationException
+        """        
         _btn_names = [sp.name for sp in cls.__renderer.get_active_buttons()]
         try:
             if event_name in ["maps", "about"]:
@@ -80,6 +101,16 @@ class Application:
     @classmethod
     def _change_mode(cls, new_mode: Mode,
                      clicked: str="") -> None:
+        """_Changes the application mode and uses the renderer to
+        render the correct layout according to the new mode_
+
+        Args:
+            new_mode (Mode)
+            clicked (str, optional): _name of the clicked button_. Defaults to "".
+
+        Raises:
+            ApplicationException: _description_
+        """        
         cls.MODE = new_mode
         try:
            cls.__renderer.render_mode(cls.MODE, clicked)

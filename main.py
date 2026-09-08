@@ -1,4 +1,4 @@
-from fly_in.src.application import Application, ApplicationException
+from fly_in import
 
 def main():
     try:

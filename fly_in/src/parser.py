@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 
 class ParsingException(Exception):
+    
     def __init__(self, map_name: str = "", line: int = -1, msg: str | None = None,
                  fmsg: str = ""):
         self.msg = msg
