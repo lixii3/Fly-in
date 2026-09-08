@@ -5,6 +5,7 @@ from typing import List
 
 
 class MetaData(BaseModel):
+    """Validated metadata shared by hubs and connections."""
 
     tag: Tag
     z_type: ZoneType | None = None
@@ -15,6 +16,7 @@ class MetaData(BaseModel):
 
     @model_validator(mode="after")
     def validator(self) -> Self:
+        """Validate and normalize metadata according to its tag."""
         if self.tag == Tag.CONNECTION and not self.max_link_capacity:
             self.max_link_capacity = 1
         if not self.tag == Tag.CONNECTION and self.max_link_capacity:
@@ -43,6 +45,7 @@ class MetaData(BaseModel):
 
 
 class HubData(BaseModel):
+    """Validated hub declaration from a map file."""
     tag: Tag
     name: str = Field(min_length=1)
     x: int = -1
@@ -51,6 +54,7 @@ class HubData(BaseModel):
 
     @model_validator(mode="after")
     def validator(self) -> Self:
+        """Validate hub naming, metadata, and coordinates."""
         self.name = self.name.strip()
         if self.tag == Tag.CONNECTION:
             raise ValueError("Invalid value for tag")
@@ -71,6 +75,7 @@ class HubData(BaseModel):
 
 
 class ConnectionData(BaseModel):
+    """Validated connection declaration from a map file."""
     tag: Tag = Tag.CONNECTION
     name: str = Field(min_length=3)
     metadata: MetaData | None = None
@@ -79,6 +84,7 @@ class ConnectionData(BaseModel):
 
     @model_validator(mode="after")
     def validator(self) -> Self:
+        """Validate a connection name and derive its endpoint names."""
         self.name = self.name.strip()
         if not self.tag == Tag.CONNECTION:
             raise ValueError("Tag must be of type ParsingTags.CONNECTION")
@@ -98,6 +104,7 @@ class ConnectionData(BaseModel):
 
 
 class MapData(BaseModel):
+    """Validated complete map definition."""
     name: str = Field(min_length=1)
     nb_drones: int = Field(ge=0)
     hubs: List[HubData] = Field(min_length=2)
@@ -105,6 +112,7 @@ class MapData(BaseModel):
 
     @model_validator(mode="after")
     def validator(self) -> Self:
+        """Validate map connectivity, uniqueness, and hub requirements."""
         has_start: int = 0
         has_end: int = 0
         names = [h.name for h in self.hubs]

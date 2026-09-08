@@ -18,15 +18,26 @@ from typing import Callable
 _curr_path = ""
 
 class RenderException(Exception):
+    """Exception raised when a rendering operation fails."""
+
     def __init__(self, msg: str = "") -> None:
+        """Initialize a rendering exception.
+
+        Args:
+            msg (str, optional): Error message. Defaults to "".
+        """
         self.msg = msg
         super().__init__(msg)
         
     def __str__(self) -> str:
+        """Return the formatted rendering error."""
         return "Renderer Exception: " + self.msg
 
 class Renderer:
+    """Manage pygame resources, layouts, and frame rendering."""
+
     def __init__(self) -> None:
+        """Initialize pygame, load resources, and prepare the display."""
         self.name = "lixi"
         pg.init()
         self.SCREEN = pg.display.set_mode()
@@ -52,6 +63,7 @@ class Renderer:
             raise RenderException("Couldn't find drone png resource")
 
     def _load_resources(self) -> None:
+        """Load fonts, backgrounds, buttons, and sprites from resources."""
         _font_path = "fly_in/src/rendering/resources/fonts"
         _bg_path = "fly_in/src/rendering/resources/bg"
         _btns_path = "fly_in/src/rendering/resources/buttons"
@@ -97,9 +109,11 @@ class Renderer:
                     self.sprites[name] = sprite
     
     def get_active_buttons(self) -> pg.sprite.Group[PNGButton]:
+        """Return the buttons currently displayed."""
         return self. __active_buttons
     
     def get_graph_surface(self) -> pg.Surface:
+        """Return the transparent surface used for graph rendering."""
         return self. __graph_surface
                     
     def create_btns(self, titles: list[str],
@@ -108,6 +122,16 @@ class Renderer:
                     spacing_y: int = 0,
                     centered: bool = True,
                     start_x: int = 0) -> None:
+        """Create and position a button for each title.
+
+        Args:
+            titles (list[str]): Button labels and names.
+            button (PNGButton): Button template to copy.
+            start_y (int, optional): Initial vertical position.
+            spacing_y (int, optional): Vertical spacing between buttons.
+            centered (bool, optional): Center buttons horizontally.
+            start_x (int, optional): Horizontal position when not centered.
+        """
         for i, t in enumerate(titles):
             if t == "back" and "menu_white" in self.buttons:
                 btn = deepcopy(self.buttons["menu_white"])
@@ -125,6 +149,15 @@ class Renderer:
 
     def render_mode(self, mode: Mode,
                     _clicked: str) -> None:
+        """Build the UI layout for a mode.
+
+        Args:
+            mode (Mode): Mode whose layout should be rendered.
+            _clicked (str): Selected map or level name.
+
+        Raises:
+            RenderException: If the mode cannot be rendered.
+        """
         self.__active_buttons.empty() # Rimuove i vecchi bottoni
         if mode is None:
             raise RenderException("Invalid mode to render")
@@ -142,6 +175,7 @@ class Renderer:
         start_x = 150
 
         def __menu_layout() -> None:
+            """Build the main menu button layout."""
             self.__graph = None
             titles = ["maps", "about", "quit"]
             self.create_btns(titles, _button,
@@ -149,6 +183,7 @@ class Renderer:
                         centered, start_x)
             
         def __maps_layout() -> None:
+            """Build the map-category selection layout."""
             titles = os.listdir(_maps_path)
             titles = [dir for dir in titles if 
                         os.path.isdir(os.path.join(_maps_path, dir))
@@ -160,6 +195,7 @@ class Renderer:
                         centered, start_x)
             
         def __about_layout() -> None:
+            """Build the about-screen layout."""
             nonlocal start_y
             titles = ["back"]
             start_y = start_y + self.HEIGHT // 3
@@ -167,6 +203,7 @@ class Renderer:
                         spacing_y, centered, start_x)
             
         def __levels_layout() -> None:
+            """Build the level selection layout for the chosen map category."""
             global _curr_path
             _curr_path = os.path.join(_maps_path, _clicked)
             for filename in os.listdir(_curr_path):
@@ -186,6 +223,7 @@ class Renderer:
                         centered, start_x)
         
         def __flying_layout() -> None:
+            """Load the selected level and initialize its schedule."""
             global _curr_path
             _curr_path = os.path.join(_curr_path, _clicked + ".txt")
             titles  = ["back"]
@@ -219,6 +257,11 @@ class Renderer:
             raise e
 
     def _draw(self, mode: Mode) -> None:
+        """Draw the current background, graph, drones, and buttons.
+
+        Args:
+            mode (Mode): Mode currently being displayed.
+        """
         self.BG = self.backgrounds.get(mode.value)
         if mode == Mode.LEVELS:
             self.BG = self.backgrounds.get(Mode.MAPS.value)
@@ -252,6 +295,11 @@ class Renderer:
         self.__active_buttons.draw(self.SCREEN)
         
     def _update(self, mode: Mode) -> None:
+        """Advance sprites and flying-mode turn animation.
+
+        Args:
+            mode (Mode): Mode currently being updated.
+        """
         self.__active_buttons.update()
         
         if mode == Mode.FLYING:
@@ -301,14 +349,24 @@ class Renderer:
                             drone.set_where(drone.get_where())
 
     def update_frame(self) -> None:
+        """Present the rendered frame and throttle to the target FPS."""
         pg.display.flip()
         self.CLOCK.tick(60)
                     
 class GraphRenderer:
+    """Render graph connections and zones onto pygame surfaces."""
+
     @classmethod
     def drawConnection(cls, conn: Connection,
                     surface: pg.Surface,
                     normalizer_funct: Callable | None=None) -> None:
+        """Draw a connection line on a surface.
+
+        Args:
+            conn (Connection): Connection to draw.
+            surface (pg.Surface): Destination surface.
+            normalizer_funct (Callable | None, optional): Coordinate mapper.
+        """
         color = pg.Color("#000000")
         color.a = 255
         xa, ya = conn.get_zoneA().get_coordinates()
@@ -326,6 +384,15 @@ class GraphRenderer:
                 normalizer_funct: Callable | None=None,
                 img: pg.Surface | None = None,
                 radius: int=30) -> None:
+        """Draw a zone as a circle or sprite.
+
+        Args:
+            zone (Zone): Zone to draw.
+            surface (pg.Surface): Destination surface.
+            normalizer_funct (Callable | None, optional): Coordinate mapper.
+            img (pg.Surface | None, optional): Optional zone sprite.
+            radius (int, optional): Circle radius. Defaults to 30.
+        """
         color = zone.get_color().value
         x, y = zone.get_coordinates()
         center = (x,y)
@@ -342,6 +409,16 @@ class GraphRenderer:
                 surface: pg.Surface,
                 sprites: dict[str, pg.Surface] | None = None) -> Callable[[int, int],
                                                             tuple[int, int]]:
+        """Draw all graph connections and zones.
+
+        Args:
+            graph (Graph): Graph to draw.
+            surface (pg.Surface): Destination surface.
+            sprites (dict[str, pg.Surface] | None, optional): Zone sprites.
+
+        Returns:
+            Callable[[int, int], tuple[int, int]]: Coordinate mapper used.
+        """
         to_screen: Callable = calcola_trasformazione(graph.get_zones(),
                                                         surface.get_width(),
                                                         surface.get_height())
@@ -363,7 +440,14 @@ class GraphRenderer:
 
 
 class DroneRenderer:
+    """Render drone sprites at their interpolated graph positions."""
+
     def __init__(self, img: pg.Surface):
+        """Create a renderer using a drone image.
+
+        Args:
+            img (pg.Surface): Source drone image.
+        """
         self.img = img
 
         self.img = pg.transform.scale(self.img, (80, 50)) 
@@ -371,6 +455,14 @@ class DroneRenderer:
     def drawDrone(self, screen: pg.Surface,
                 d: Drone,
                 ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+        """Draw one drone at its interpolated position.
+
+        Args:
+            screen (pg.Surface): Destination surface.
+            d (Drone): Drone to draw.
+            ft_mapping (Callable[[int, int], tuple[int, int]], optional):
+                Coordinate mapper.
+        """
         import math
         x, y = DroneRenderer._get_render_coordinates(d)
         
@@ -399,12 +491,28 @@ class DroneRenderer:
     
     def drawDrones(self, screen: pg.Surface, graph: Graph,
                 ft_mapping: Callable[[int, int], tuple[int, int]] = None) -> None:
+        """Draw every drone in a graph.
+
+        Args:
+            screen (pg.Surface): Destination surface.
+            graph (Graph): Graph containing drones.
+            ft_mapping (Callable[[int, int], tuple[int, int]], optional):
+                Coordinate mapper.
+        """
         for d in graph.get_drones():
             self.drawDrone(screen, d, ft_mapping)
 
 
     @staticmethod
     def _get_render_coordinates(drone: Drone) -> tuple[float, float]:
+        """Interpolate a drone position between its previous and current target.
+
+        Args:
+            drone (Drone): Drone whose position should be calculated.
+
+        Returns:
+            tuple[float, float]: Current interpolated coordinates.
+        """
         if not drone.get_where():
             return (0.0, 0.0)
             

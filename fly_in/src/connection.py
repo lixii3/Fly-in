@@ -9,18 +9,29 @@ if TYPE_CHECKING:
     from fly_in.src.zone import Zone
     from fly_in.src.drone import Drone
 class ConnectionException(Exception):
-    def __init__(self, msg: str) -> None:
+    """Exception raised when a connection operation fails."""
+
+    def __init__(self, msg: str):
+        """Initialize a connection-related exception.
+
+        Args:
+            msg (str): Error message describing the connection failure.
+        """
         self.msg = msg
         super().__init__(msg)
 
     def __str__(self):
+        """Return the formatted exception message."""
         return "ConnectionException: " + self.msg
 
 
 class Connection:
+    """Represent a link between two zones and its turn reservations."""
+
     @overload
     def __init__(self, name: str, zoneA: Zone, zoneB: Zone,
                  color: str, max_link_capacity: int = 1) -> None:
+        """Create a connection from endpoint zones and display settings."""
         try:
             metadata: MetaData = MetaData(
                 tag=Tag.CONNECTION,
@@ -33,6 +44,12 @@ class Connection:
         self.__init__(data, [zoneA, zoneB])
 
     def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
+        """Create a connection from validated data and its endpoint zones.
+
+        Args:
+            data (ConnectionData): Validated connection definition.
+            zones (Iterable[Zone]): Zones available in the map.
+        """
         self.__name: Final[str] = data.name
         self.__arch: tuple[Zone, Zone] = ()
         self.__color = data.metadata.color
@@ -51,73 +68,53 @@ class Connection:
 
     # GETTERS
     def get_name(self) -> str:
-        """
-        Returns:
-            str: _the connection name._
-        """        
+        """Return the connection name."""
         return self.__name
 
     def get_color(self) -> ParsingColors:
-        """
-        Returns:
-            ParsingColors: _the connection color._
-        """        
+        """Return the configured connection color."""
         return self.__color
 
     def get_arch(self) -> set[Zone]:
-        """
-        Returns:
-            set[Zone]: _the zones witch the connection links_
-        """        
+        """Return the two zones connected by this connection."""
         return self.__arch
 
     def get_zoneA(self) -> Zone:
-        """
-        Returns:
-            Zone: _the first zone of the connection._
-        """        
+        """Return the first endpoint zone."""
         return self.__arch[0]
 
     def get_zoneB(self) -> Zone:
-        """
-        Returns:
-            Zone: _the second zone of the connection._
-        """        
+        """Return the second endpoint zone."""
         return self.__arch[1]
     
     def get_coordinates(self) -> tuple[int, int]:
-        """
-        Returns:
-            tuple[int, int]: _the middle point between the
-            coordinates of the two linked zones._
-        """        
+        """Return the midpoint coordinates of the endpoint zones."""
         xa, ya = self.get_zoneA().get_coordinates()
         xb, yb = self.get_zoneB().get_coordinates()
         return ((xa + xb) // 2, (ya + yb) // 2)
 
     def space_left_at(self, turn: int) -> int:
-        """
+        """Return capacity remaining for a specific turn.
+
         Args:
-            turn (int)
+            turn (int): Turn whose reservations should be checked.
 
         Returns:
-            int: _the space left on the connection on the given turn._
-        """        
+            int: Number of available connection slots.
+        """
         # Sottrai i droni già prenotati per quel turno specifico
         reserved = self.__reservations.get(turn, 0)
         return self.MAX_LINK_CAPACITY - reserved
 
     def reserve(self, turn: int) -> None:
-        """It adds a reervation on the given turn for this connection._
+        """Reserve one connection slot for a turn.
 
         Args:
-            turn (int): _description_
+            turn (int): Turn in which the connection will be used.
 
         Raises:
-            ConnectionException: _If the connection has reached its space
-            limit for that turn, then this method will raise an exception._
-        """        
+            ConnectionException: If the connection is at capacity.
+        """
         if self.space_left_at(turn) <= 0:
             raise ConnectionException(f"Errore: impossibile prenotare la risorsa {self.get_name()} al turno {turn}")
         self.__reservations[turn] = self.__reservations.get(turn, 0) + 1
-

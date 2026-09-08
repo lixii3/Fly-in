@@ -4,6 +4,18 @@ from typing import Callable
 
 def calcola_trasformazione(nodi: list[Zone], width: int,
                                height: int, padding=50) -> Callable:
+        """Create a function mapping graph coordinates to screen coordinates.
+
+        Args:
+            nodi (list[Zone]): Zones whose coordinate bounds define the graph.
+            width (int): Target surface width in pixels.
+            height (int): Target surface height in pixels.
+            padding (int, optional): Minimum edge padding in pixels.
+                Defaults to 50.
+
+        Returns:
+            Callable: Coordinate conversion function.
+        """
         # 1. Trova gli estremi del grafo
         xs = [nodo.get_x() for nodo in nodi]
         ys = [nodo.get_y() for nodo in nodi]
@@ -32,6 +44,15 @@ def calcola_trasformazione(nodi: list[Zone], width: int,
         
         # 3. Funzione di conversione da applicare a Nodi, Archi e Droni
         def world_to_screen(x, y) -> tuple[int, int]:
+            """Convert one world-space point to screen-space coordinates.
+
+            Args:
+                x (float): World-space horizontal coordinate.
+                y (float): World-space vertical coordinate.
+
+            Returns:
+                tuple[int, int]: Screen-space pixel coordinates.
+            """
             screen_x = int(offset_x + (x - min_x) * scale)
             screen_y = int(offset_y + (y - min_y) * scale)
             return (screen_x, screen_y)

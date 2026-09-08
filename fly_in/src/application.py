@@ -7,27 +7,36 @@ from fly_in.src.rendering.pngButton import PNGButton
 
 
 class ApplicationException(Exception):
+    """Exception raised when the application cannot continue."""
+
     def __init__(cls, msg: str=""):
+        """Initialize an application-level exception.
+
+        Args:
+            msg (str, optional): Error message. Defaults to "".
+        """
         cls.msg = msg
         super().__init__(msg)
     
     def __str__(cls):
+        """Return the exception message."""
         return cls.msg
 
 
 class Application:
+    """Coordinate the pygame event loop and renderer."""
+
     MODE: Mode = Mode.NONE
     __running = False
     __renderer: Renderer
 
     @classmethod
     def run(cls) -> None:
-        """It starts the application loop.
+        """Initialize and run the pygame application loop.
 
         Raises:
-            ApplicationException
-            ApplicationException
-        """        
+            ApplicationException: If rendering or event handling fails.
+        """
         cls.MODE = Mode.MENU
         try:
             cls.__renderer = Renderer()
@@ -48,13 +57,12 @@ class Application:
         pg.quit()
 
     @classmethod
-    def _handle_events(cls, events: list[pg.event.Event]) -> None:
-        """_It handles active events by redirecting their manageing
-        to other specific custom methods._
+    def _handle_events(cls, events: list) -> None:
+        """Process window, keyboard, and active-button events.
 
         Args:
-            events (list[pygame.event.Event]): list of pygame events.
-        """        
+            events (list): Pygame events to process.
+        """
         for event in events:
             if event.type == pg.QUIT:
                 cls.__running = False
@@ -73,15 +81,11 @@ class Application:
 
     @classmethod
     def _click(cls, event_name: str) -> None:
-        """_Checks if the event is a button being clicked
-        and acts accordingly._
+        """Apply the action represented by a clicked button.
 
         Args:
-            event_name (str): name of the active event.
-
-        Raises:
-            ApplicationException
-        """        
+            event_name (str): Name of the clicked button.
+        """
         _btn_names = [sp.name for sp in cls.__renderer.get_active_buttons()]
         try:
             if event_name in ["maps", "about"]:
@@ -101,16 +105,13 @@ class Application:
     @classmethod
     def _change_mode(cls, new_mode: Mode,
                      clicked: str="") -> None:
-        """_Changes the application mode and uses the renderer to
-        render the correct layout according to the new mode_
+        """Switch the renderer to a new application mode.
 
         Args:
-            new_mode (Mode)
-            clicked (str, optional): _name of the clicked button_. Defaults to "".
-
-        Raises:
-            ApplicationException: _description_
-        """        
+            new_mode (Mode): Mode to render.
+            clicked (str, optional): Selected map or level name.
+                Defaults to "".
+        """
         cls.MODE = new_mode
         try:
            cls.__renderer.render_mode(cls.MODE, clicked)

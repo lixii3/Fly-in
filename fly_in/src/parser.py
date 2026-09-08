@@ -6,9 +6,18 @@ from pydantic import ValidationError
 
 
 class ParsingException(Exception):
-    
+    """Exception raised for an invalid map declaration."""
+
     def __init__(self, map_name: str = "", line: int = -1, msg: str | None = None,
                  fmsg: str = ""):
+        """Initialize a parsing error with optional map and line context.
+
+        Args:
+            map_name (str, optional): Name of the map being parsed.
+            line (int, optional): Source line containing the error.
+            msg (str | None, optional): Error description.
+            fmsg (str, optional): Preformatted error message.
+        """
         self.msg = msg
         self.map = map_name
         self.line = line
@@ -20,17 +29,26 @@ class ParsingException(Exception):
         super().__init__(self.fmsg, map_name, line)
 
     def __str__(self):
+        """Return the formatted parsing error."""
         return "Parsing Exception: " + self.fmsg
 
 
 class MultipleParsingExceptions(Exception):
+    """Exception aggregating multiple map parsing errors."""
+
     def __init__(self, errors: list[ParsingException]):
+        """Initialize an exception containing multiple parsing errors.
+
+        Args:
+            errors (list[ParsingException]): Errors collected during parsing.
+        """
         self.errors = errors
         # Generiamo un messaggio riassuntivo che mostra il numero di errori
         self.msg = f"Parsing fallito: trovati {len(errors)} errori."
         super().__init__(self.msg)
 
     def __str__(self):
+        """Return all contained parsing errors."""
         output: str = ""
         for e in self.errors:
             output += str(e) + "\n"
@@ -38,8 +56,22 @@ class MultipleParsingExceptions(Exception):
 
 
 class Parser:
+    """Parse map files into validated graph objects."""
+
     @staticmethod
     def parse_map(map: str) -> Graph:
+        """Parse a map file into a graph.
+
+        Args:
+            map (str): Path to the map file.
+
+        Returns:
+            Graph: Graph created from the parsed map.
+
+        Raises:
+            ParsingException: If the file or map structure is invalid.
+            MultipleParsingExceptions: If multiple line errors are found.
+        """
         error_list: List[ParsingException] = []
         graph: Graph
         g_name: str = map.rsplit("/", 1)[-1].split(".")[0]
@@ -108,6 +140,17 @@ class Parser:
 
     @staticmethod
     def _parse_nb_drones(row: str) -> int:
+        """Parse the drone count declaration.
+
+        Args:
+            row (str): Source row containing the declaration.
+
+        Returns:
+            int: Number of drones declared.
+
+        Raises:
+            ParsingException: If the declaration is malformed.
+        """
         tag: str
         nb_drones: str
         if len(row.split(":")) == 2:
@@ -120,6 +163,18 @@ class Parser:
 
     @staticmethod
     def _parse_zone(row: str, nb_drones: int) -> ConnectionData | HubData:
+        """Parse a hub or connection row.
+
+        Args:
+            row (str): Source row to parse.
+            nb_drones (int): Map drone count used for validation.
+
+        Returns:
+            ConnectionData | HubData: Validated parsed data.
+
+        Raises:
+            ParsingException: If the row or metadata is invalid.
+        """
         line: str = row.split("[")[0]
         data: ConnectionData | HubData
         tag: Tag
@@ -177,6 +232,19 @@ class Parser:
 
     @staticmethod
     def _parse_metadata(row: str, tag: Tag, nb_drones: int) -> MetaData:
+        """Parse bracketed metadata into a validated model.
+
+        Args:
+            row (str): Metadata contents without brackets.
+            tag (Tag): Tag of the enclosing map item.
+            nb_drones (int): Map drone count used for validation.
+
+        Returns:
+            MetaData: Validated metadata.
+
+        Raises:
+            ParsingException: If a metadata field is invalid.
+        """
         data: MetaData
         _tags: tuple = ("color", "zone", "max_drones", "max_link_capacity")
         meta_dict: Dict[str, str] = {}
