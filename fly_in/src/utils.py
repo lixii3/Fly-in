@@ -13,7 +13,7 @@ class FlyInException(Exception):
         """
         self.msg = msg
 
-    def __str__(self) -> None:
+    def __str__(self) -> str:
         """Return the formatted exception message."""
         return f"FlyInException: {self.msg}"
 

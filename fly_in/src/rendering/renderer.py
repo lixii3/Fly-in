@@ -515,7 +515,6 @@ class DroneRenderer:
                 Coordinate mapper.
         """
         import math
-
         x, y = DroneRenderer._get_render_coordinates(d)
 
         if ft_mapping:
@@ -568,18 +567,21 @@ class DroneRenderer:
 
         Returns:
             tuple[float, float]: Current interpolated coordinates.
+        Raises:
+            RendererException
         """
-        if not drone.get_where():
+        where = drone.get_where()
+        last_p = drone.get_last_pos()
+        if where is None or last_p is None:
             return (0.0, 0.0)
-
-        end_x, end_y = drone.get_where().get_coordinates()
-
+        end_x, end_y = where.get_coordinates()
+        
         # Se il drone è fermo o non ha una posizione precedente
-        if not drone.get_last_pos() or\
-           drone.get_where() == drone.get_last_pos():
+        if not last_p or\
+           where == last_p:
             return (end_x, end_y)
 
-        start_x, start_y = drone.get_last_pos().get_coordinates()
+        start_x, start_y = last_p.get_coordinates()
 
         # Interpolazione lineare
         curr_x = start_x + (end_x - start_x) * drone.progress

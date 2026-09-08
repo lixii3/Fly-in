@@ -15,8 +15,8 @@ class Drone:
     def __init__(self) -> None:
         """Create a drone with a unique identifier and empty route."""
         self.ID: Final[str] = f"D{Drone._counter}"
-        self.__where: Zone | Connection = None
-        self.__last_pos: Zone | Connection = None
+        self.__where: Zone | Connection | None = None
+        self.__last_pos: Zone | Connection | None = None
         Drone._counter += 1
         self.progress = 0.0
         self.path: list[tuple[Action, Zone | Connection, int]] = []
@@ -38,11 +38,11 @@ class Drone:
         """
         self.__last_pos = where
 
-    def get_where(self) -> Zone | Connection:
+    def get_where(self) -> Zone | Connection | None:
         """Return the drone's current location."""
         return self.__where
 
-    def get_last_pos(self) -> Zone | Connection:
+    def get_last_pos(self) -> Zone | Connection | None:
         """Return the drone's previous location."""
         return self.__last_pos
 
@@ -56,7 +56,8 @@ class Drone:
 
     def get_action_at_turn(self,
                            turn: int) -> tuple[Action,
-                                               Zone | Connection,
+                                               Zone | Connection |
+                                               None,
                                                int]:
         """Return the scheduled action for a turn.
 

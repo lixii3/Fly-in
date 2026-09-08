@@ -70,7 +70,8 @@ class Scheduler:
         print(f"Total turns: {self.TURNS}")
 
     def __generate_output_file(self, filename: str = "output.txt") -> int:
-        """Write scheduled moves to a turn-by-turn output file.
+        """both writes scheduled moves to a turn-by-turn output file
+        and prints it to terminal.
 
         Args:
             filename (str, optional): Destination file path. Defaults to
@@ -80,7 +81,7 @@ class Scheduler:
             int: Number of output turns written.
         """
         curr_turn = 1
-        dest: Zone | Connection
+        dest: Zone | Connection | None
         action: tuple[Action, Zone | Connection | None, int]
         output: list[str] = []
         all_done: bool
@@ -105,6 +106,7 @@ class Scheduler:
             if len(turn_moves) > 0:
                 line = " ".join(turn_moves)
                 output.append(line + "\n")
+                print(line)
             curr_turn += 1
         try:
             with open(filename, "w") as file:

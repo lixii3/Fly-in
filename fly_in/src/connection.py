@@ -1,7 +1,7 @@
 from __future__ import annotations
 from fly_in.src.validation_models import ParsingColors, Tag
 from fly_in.src.validation_models import ConnectionData, MetaData
-from typing import Final, Iterable, TYPE_CHECKING, overload
+from typing import Final, Iterable, TYPE_CHECKING, overload, cast
 from pydantic import ValidationError
 
 
@@ -72,7 +72,7 @@ class Connection:
                 f"Expecting zones ('{data.zoneA}', {data.zoneB}') "
                 "to exist within the map."
             )
-        self.__arch = tuple(__tmparch)
+        self.__arch = cast(tuple["Zone", "Zone"], tuple(__tmparch))
 
     # GETTERS
     def get_name(self) -> str:
@@ -83,7 +83,7 @@ class Connection:
         """Return the configured connection color."""
         return self.__color
 
-    def get_arch(self) -> set[Zone]:
+    def get_arch(self) -> tuple[Zone, Zone]:
         """Return the two zones connected by this connection."""
         return self.__arch
 
