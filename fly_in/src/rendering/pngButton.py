@@ -4,6 +4,7 @@ import copy
 
 
 class PNGButton(pg.sprite.Sprite):
+    """Interactive pygame sprite backed by a PNG image."""
 
     def __init__(
         self,
@@ -20,6 +21,22 @@ class PNGButton(pg.sprite.Sprite):
         glow_radius=15,
         glow_passes=10
     ):
+        """Create a clickable image button with optional text and glow.
+
+        Args:
+            image_path (str): Path to the button image.
+            name (str, optional): Button name. Defaults to "".
+            x (int, optional): Initial horizontal position. Defaults to 0.
+            y (int, optional): Initial vertical position. Defaults to 0.
+            text (str, optional): Initial label. Defaults to "".
+            font (pg.font.Font, optional): Font used for labels.
+            text_color (tuple, optional): Label color.
+            outline_color (tuple, optional): Label outline color.
+            outline_thickness (int, optional): Label outline width.
+            glow_color (tuple, optional): Hover glow color.
+            glow_radius (int, optional): Glow radius.
+            glow_passes (int, optional): Number of glow layers.
+        """
         super().__init__()
 
         # Salviamo i parametri per poterli riutilizzare nel metodo add_text
@@ -73,6 +90,14 @@ class PNGButton(pg.sprite.Sprite):
     
     
     def __deepcopy__(self, memo):
+        """Create an independent copy of the button and its surfaces.
+
+        Args:
+            memo (dict): Memoization dictionary used by ``deepcopy``.
+
+        Returns:
+            PNGButton: Copied button.
+        """
         if id(self) in memo:
             return memo[id(self)]
 
@@ -115,6 +140,11 @@ class PNGButton(pg.sprite.Sprite):
         return new_btn
 
     def _create_glow_image(self) -> pg.Surface:
+        """Build the hover image by outlining the button mask.
+
+        Returns:
+            pg.Surface: Surface containing the glow and original image.
+        """
         mask = pg.mask.from_surface(self.original_image)
         padding = self.glow_radius * 2
         glow_size = (self.rect.width + padding, self.rect.height + padding)
@@ -149,6 +179,11 @@ class PNGButton(pg.sprite.Sprite):
         return glow_surface
     
     def add_text(self, text: str) -> None:
+        """Render a label onto the button and rebuild its glow.
+
+        Args:
+            text (str): Label to render.
+        """
         # Resetta l'immagine all'originale pulita
         self.original_image = self.base_image.copy()
 
@@ -215,6 +250,7 @@ class PNGButton(pg.sprite.Sprite):
             self.image = self.original_image
 
     def update(self) -> None:
+        """Update hover state using pixel-perfect mouse collision."""
         mouse_pos = pg.mouse.get_pos()
         was_hovered = self.is_hovered
         
@@ -261,6 +297,14 @@ class PNGButton(pg.sprite.Sprite):
             )
             
     def is_clicked(self, event_list: list) -> bool:
+        """Return whether a left-click occurred while hovered.
+
+        Args:
+            event_list (list): Pygame events to inspect.
+
+        Returns:
+            bool: Whether this button was clicked.
+        """
         if self.is_hovered:
             for event in event_list:
                 if event.type == pg.MOUSEBUTTONDOWN and event.button == 1:

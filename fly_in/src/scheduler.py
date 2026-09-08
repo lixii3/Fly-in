@@ -6,19 +6,42 @@ from fly_in.src.utils import Action
 
 
 class SchedulerException(Exception):
+    """Exception raised when a schedule cannot be generated."""
+
     def __init__(self, msg: str = ""):
+        """Initialize a scheduling exception.
+
+        Args:
+            msg (str, optional): Error message. Defaults to "".
+        """
         super().__init__(msg)
         self.msg = msg
 
     def __str__(self):
+        """Return the formatted exception message."""
         return "SchedulerException: " + self.msg
 
 class Scheduler:
+    """Assign capacity-aware paths and produce turn output."""
+
     def __init__(self, graph: Graph):
+        """Create a scheduler for a graph.
+
+        Args:
+            graph (Graph): Graph whose drones should be routed.
+        """
         self.__graph = graph
         self.TURNS = -1
 
     def schedule(self) -> int:
+        """Route every drone and write the resulting turn output.
+
+        Returns:
+            int: Number of turns in the generated schedule.
+
+        Raises:
+            SchedulerException: If a drone cannot be routed or output fails.
+        """
         drone: Drone
         resource: Zone | Connection
         for drone in self.__graph.get_drones():
@@ -42,6 +65,15 @@ class Scheduler:
 
 
     def __generate_output_file(self, filename: str = "output.txt") -> int:
+        """Write scheduled moves to a turn-by-turn output file.
+
+        Args:
+            filename (str, optional): Destination file path. Defaults to
+                "output.txt".
+
+        Returns:
+            int: Number of output turns written.
+        """
         curr_turn = 1
         dest: Zone | Connection
         action: Action

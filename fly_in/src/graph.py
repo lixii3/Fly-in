@@ -9,16 +9,31 @@ from fly_in.src.drone import Drone
 
 
 class GraphException(Exception):
+    """Exception raised when a graph operation fails."""
+
     def __init__(self, msg: str = ""):
+        """Initialize a graph-related exception.
+
+        Args:
+            msg (str, optional): Error message. Defaults to "".
+        """
         self.msg = msg
         super().__init__(msg)
 
     def __str__(self):
+        """Return the exception message."""
         return self.msg
 
 
 class Graph:
+    """Represent zones, connections, and drones for one map."""
+
     def __init__(self, data: MapData):
+        """Build a graph from validated map data.
+
+        Args:
+            data (MapData): Validated map definition.
+        """
         self.__name = data.name
         self.__nb_drones = data.nb_drones
         self.__zones: List[Zone] = []
@@ -45,24 +60,38 @@ class Graph:
 
     ##### GETTERS #######
     def get_name(self) -> str:
+        """Return the graph name."""
         return self.__name
     
     def get_nb_drones(self) -> int:
+        """Return the number of drones configured for the graph."""
         return self.__nb_drones
 
     def get_zones(self) -> List['Zone']:
+        """Return all zones in the graph."""
         return self.__zones
     
     def get_start(self) -> Zone:
+        """Return the graph's start hub."""
         return self.__start
     
     def get_end(self) -> Zone:
+        """Return the graph's end hub."""
         return self.__end
 
     def get_connections(self) -> List[Connection]:
+        """Return all graph connections."""
         return self.__connections
     
     def get_zone_connections(self, zone: Zone) -> List[Zone]:
+        """Return zones directly connected to a zone.
+
+        Args:
+            zone (Zone): Zone whose neighbors should be found.
+
+        Returns:
+            List[Zone]: Directly connected neighboring zones.
+        """
         connected: List[Zone] = []
         for c in self.__connections:
             if c.get_zoneA() == zone:
@@ -72,6 +101,11 @@ class Graph:
         return connected
 
     def remove_connection(self, conn: Connection) -> None:
+        """Remove a connection from the graph.
+
+        Args:
+            conn (Connection): Connection to remove.
+        """
         try:
             self.__connections.remove(conn)
         except ValueError:
@@ -79,9 +113,18 @@ class Graph:
                            f"in graph '{self.__name}'")
     
     def get_drones(self) -> List[Drone]:
+        """Return all drones assigned to the graph."""
         return self.__drones
     
     def add_drone(self, drone: Drone) -> None:
+        """Add a drone and place it at the start hub.
+
+        Args:
+            drone (Drone): Drone to add.
+
+        Raises:
+            GraphException: If the drone is already in the graph.
+        """
         if drone in self.__drones:
             raise GraphException(f"Drone '{drone.ID}' already in graph '{self.__name}'")
         drone.set_where(self.get_start())
@@ -89,6 +132,11 @@ class Graph:
     
 
     def remove_zone(self, zone: Connection) -> None:
+        """Remove a zone and its incident connections.
+
+        Args:
+            zone (Connection): Zone to remove.
+        """
         try:
             self.__zones.remove(zone)
         except ValueError:
@@ -102,6 +150,7 @@ class Graph:
                     raise e
 
     def graphInfo(self) -> str:
+        """Return a human-readable description of the graph."""
         lines = [
             f"Graph: {self.__name}",
             f"Drones: {self.__nb_drones}",
@@ -126,6 +175,14 @@ class Graph:
         return "\n".join(lines)
 
     def get_links(self, zone: Zone) -> list[Connection]:
+        """Return connections incident to a zone.
+
+        Args:
+            zone (Zone): Zone whose links should be found.
+
+        Returns:
+            list[Connection]: Incident connections.
+        """
         links: list[Connection] = []
         for c in self.__connections:
             if c.get_zoneA() == zone or c.get_zoneB() == zone:
@@ -134,11 +191,32 @@ class Graph:
 
     @staticmethod
     def manhattan_distance(zoneA: Zone, zoneB: Zone) -> int:
+        """Calculate Manhattan distance between two zones.
+
+        Args:
+            zoneA (Zone): First zone.
+            zoneB (Zone): Second zone.
+
+        Returns:
+            int: Sum of absolute coordinate differences.
+        """
         return abs(zoneA.get_x() - zoneB.get_x()) + abs(zoneA.get_y() - zoneB.get_y())
     
     def get_min_cost_path(self, start_zone: Zone,
                           end_zone: Zone,
                           start_turn: int = 0) -> Optional[List[Tuple[Action, Zone | Connection, int]]]:
+        """Find a capacity-aware minimum-cost path between two zones.
+
+        Args:
+            start_zone (Zone): Zone from which the route starts.
+            end_zone (Zone): Destination zone.
+            start_turn (int, optional): Turn at which searching starts.
+                Defaults to 0.
+
+        Returns:
+            Optional[List[Tuple[Action, Zone | Connection, int]]]: Scheduled
+                actions and resources, or None when no route exists.
+        """
         import heapq
 
         queue: List[Tuple[float, int, int, float, str, Zone, Tuple[Action, Zone | Connection, int]] ]= []

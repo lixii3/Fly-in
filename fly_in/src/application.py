@@ -7,21 +7,36 @@ from fly_in.src.rendering.pngButton import PNGButton
 
 
 class ApplicationException(Exception):
+    """Exception raised when the application cannot continue."""
+
     def __init__(cls, msg: str=""):
+        """Initialize an application-level exception.
+
+        Args:
+            msg (str, optional): Error message. Defaults to "".
+        """
         cls.msg = msg
         super().__init__(msg)
     
     def __str__(cls):
+        """Return the exception message."""
         return cls.msg
 
 
 class Application:
+    """Coordinate the pygame event loop and renderer."""
+
     MODE: Mode = Mode.NONE
     __running = False
     __renderer: Renderer
 
     @classmethod
     def run(cls) -> None:
+        """Initialize and run the pygame application loop.
+
+        Raises:
+            ApplicationException: If rendering or event handling fails.
+        """
         cls.MODE = Mode.MENU
         try:
             cls.__renderer = Renderer()
@@ -43,6 +58,11 @@ class Application:
 
     @classmethod
     def _handle_events(cls, events: list) -> None:
+        """Process window, keyboard, and active-button events.
+
+        Args:
+            events (list): Pygame events to process.
+        """
         for event in events:
             if event.type == pg.QUIT:
                 cls.__running = False
@@ -61,6 +81,11 @@ class Application:
 
     @classmethod
     def _click(cls, event_name: str) -> None:
+        """Apply the action represented by a clicked button.
+
+        Args:
+            event_name (str): Name of the clicked button.
+        """
         _btn_names = [sp.name for sp in cls.__renderer.get_active_buttons()]
         try:
             if event_name in ["maps", "about"]:
@@ -80,6 +105,13 @@ class Application:
     @classmethod
     def _change_mode(cls, new_mode: Mode,
                      clicked: str="") -> None:
+        """Switch the renderer to a new application mode.
+
+        Args:
+            new_mode (Mode): Mode to render.
+            clicked (str, optional): Selected map or level name.
+                Defaults to "".
+        """
         cls.MODE = new_mode
         try:
            cls.__renderer.render_mode(cls.MODE, clicked)
