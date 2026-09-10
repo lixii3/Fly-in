@@ -1,7 +1,7 @@
 from __future__ import annotations
-from fly_in.src.validation_models import ParsingColors, Tag
+from fly_in.src.utils import ParsingColors, Tag
 from fly_in.src.validation_models import ConnectionData, MetaData
-from typing import Final, Iterable, TYPE_CHECKING, overload, cast
+from typing import Final, Iterable, TYPE_CHECKING, cast
 from pydantic import ValidationError
 
 
@@ -21,17 +21,16 @@ class ConnectionException(Exception):
         self.msg = msg
         super().__init__(msg)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the formatted exception message."""
         return "ConnectionException: " + self.msg
 
 
 class Connection:
     """Represent a link between two zones and its turn reservations."""
-
-    @overload
-    def __init__(
-        self,
+    @classmethod
+    def get_conn(
+        cls,
         name: str,
         zoneA: Zone,
         zoneB: Zone,
@@ -42,13 +41,13 @@ class Connection:
         try:
             metadata: MetaData = MetaData(
                 tag=Tag.CONNECTION,
-                color=ParsingColors.getColor(color),
+                color=ParsingColors.get(color),
                 max_link_capacity=max_link_capacity,
             )
             data: ConnectionData = ConnectionData(name=name, metadata=metadata)
         except ValidationError as e:
             raise ConnectionException(str(e))
-        self.__init__(data, [zoneA, zoneB])
+        cls(data, [zoneA, zoneB])
 
     def __init__(self, data: ConnectionData, zones: Iterable[Zone]) -> None:
         """Create a connection from validated data and its endpoint zones.
@@ -58,9 +57,10 @@ class Connection:
             zones (Iterable[Zone]): Zones available in the map.
         """
         self.__name: Final[str] = data.name
-        self.__arch: tuple[Zone, Zone] = ()
-        self.__color = data.metadata.color
-        self.MAX_LINK_CAPACITY: Final[int] = data.metadata.max_link_capacity
+        self.__arch: tuple[Zone, Zone]
+        self.__color: ParsingColors = data.metadata.color
+        max_l = data.metadata.max_link_capacity
+        self.MAX_LINK_CAPACITY: Final[int] = max_l if max_l is not None else 1
         self.__reservations: dict[int, int] = {}
 
         __tmparch: list[Zone] = []

@@ -17,7 +17,7 @@ class SchedulerException(Exception):
         super().__init__(msg)
         self.msg = msg
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the formatted exception message."""
         return "SchedulerException: " + self.msg
 
@@ -99,7 +99,8 @@ class Scheduler:
                     continue
                 if action[0] == Action.MOVE or action[0] == Action.TRANSIT:
                     dest = action[1]
-                    movement = f"D{d.ID}-{dest.get_name()}"
+                    dstr = dest.get_name() if dest is not None else 'None'
+                    movement = f"D{d.ID}-{dstr}"
                     turn_moves.append(movement)
             if all_done:
                 break

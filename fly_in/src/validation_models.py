@@ -1,7 +1,7 @@
-from fly_in.src.utils import Tag, ParsingColors, ZoneType
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
-from typing import List
+from typing import cast
+from fly_in.src.utils import ParsingColors, Tag, ZoneType
 
 
 class MetaData(BaseModel):
@@ -47,6 +47,10 @@ class MetaData(BaseModel):
             self.z_type = ZoneType.NORMAL
         return self
 
+    @classmethod
+    def default_meta(cls, tag: Tag) -> "MetaData":
+        return cls(tag=Tag.CONNECTION)
+
 
 class HubData(BaseModel):
     """Validated hub declaration from a map file."""
@@ -55,7 +59,7 @@ class HubData(BaseModel):
     name: str = Field(min_length=1)
     x: int = -1
     y: int = -1
-    metadata: MetaData | None = None
+    metadata: MetaData
 
     @model_validator(mode="after")
     def validator(self) -> Self:
@@ -86,7 +90,7 @@ class ConnectionData(BaseModel):
 
     tag: Tag = Tag.CONNECTION
     name: str = Field(min_length=3)
-    metadata: MetaData | None = None
+    metadata: MetaData
     zoneA: str = ""
     zoneB: str = ""
 
@@ -117,8 +121,8 @@ class MapData(BaseModel):
 
     name: str = Field(min_length=1)
     nb_drones: int = Field(ge=0)
-    hubs: List[HubData] = Field(min_length=2)
-    connections: List[ConnectionData] = Field(min_length=1)
+    hubs: list[HubData] = Field(min_length=2)
+    connections: list[ConnectionData] = Field(min_length=1)
 
     @model_validator(mode="after")
     def validator(self) -> Self:
@@ -134,7 +138,7 @@ class MapData(BaseModel):
 
         # check for duplicated connections
         for ln in links:
-            l1: tuple[str, str] = tuple(sorted(ln))
+            l1: tuple[str, str] = cast(tuple[str, str], tuple(ln))
             if l1 in visti:
                 raise ValueError(f"Duplicted connection: '{ln[0]}-{ln[1]}'")
             else:

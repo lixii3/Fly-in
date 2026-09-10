@@ -1,7 +1,7 @@
 from fly_in import Application, ApplicationException
 
 
-def main():
+def main() -> None:
     """Start the Fly-in application and report application errors."""
     try:
         Application.run()

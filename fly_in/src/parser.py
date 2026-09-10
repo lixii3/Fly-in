@@ -31,7 +31,7 @@ class ParsingException(Exception):
             self.fmsg = f"Error in map '{map_name}': {msg}"
         super().__init__(self.fmsg, map_name, line)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the formatted parsing error."""
         return "Parsing Exception: " + self.fmsg
 
@@ -195,9 +195,11 @@ class Parser:
 
         if ":" not in line:
             raise ParsingException(msg="Missing ':' after tag")
-        tag = Tag.get(line.split(":")[0])
-        if tag is None:
+        _tag = Tag.get(line.split(":")[0])
+        if _tag is None:
             raise ParsingException(msg="Invalid tag")
+        else:
+            tag = _tag
 
         line = line.split(":")[1]
         args = line.strip().split()
@@ -229,7 +231,8 @@ class Parser:
                     raise e
             else:
                 raise ParsingException(msg="Invalid metadata format")
-
+        if metadata is None:
+            metadata = MetaData.default_meta(tag)
         try:
             if tag != Tag.CONNECTION:
                 data = HubData(tag=tag, name=name, x=x, y=y, metadata=metadata)
@@ -257,7 +260,9 @@ class Parser:
             ParsingException: If a metadata field is invalid.
         """
         data: MetaData
-        _tags: tuple = ("color", "zone", "max_drones", "max_link_capacity")
+        _tags: tuple[str, str, str, str] = ("color", "zone",
+                                            "max_drones",
+                                            "max_link_capacity")
         meta_dict: Dict[str, Tag | ZoneType | int | ParsingColors | None] = {}
         metadata: List[str] = row.split()
         key: str
@@ -284,7 +289,7 @@ class Parser:
                     raise ParsingException(msg="Invalid zone valuein "
                                            "metadata")
             elif key == "color":
-                meta_dict[key] = ParsingColors.getColor(value)
+                meta_dict[key] = ParsingColors.get(value)
                 if meta_dict[key] is None:
                     raise ParsingException(msg="Invalid color value metadata")
             elif key == "max_drones" or key == "max_link_capacity":
@@ -305,7 +310,6 @@ class Parser:
         except (KeyError, ValueError):
             max_l = None
 
-             
         try:
             data = MetaData(
                 tag=tag,
@@ -314,8 +318,7 @@ class Parser:
                            meta_dict.get("color", ParsingColors.WHITE)),
                 max_drones=max_d,
                 max_link_capacity=max_l,
-                nb_drones=nb_drones,
-            )
+                nb_drones=nb_drones)
         except ValidationError as e:
             raise ParsingException(msg=e.errors()[0]["msg"])
         return data

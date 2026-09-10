@@ -20,7 +20,7 @@ class ZoneException(Exception):
         self.msg = msg
         super().__init__(msg)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the exception message."""
         return self.msg
 
@@ -35,13 +35,14 @@ class Zone:
             data (HubData): Validated hub definition.
         """
         self.__drones_in: list[Drone] = []
-        self.__name = data.name
-        self.__x = data.x
-        self.__y = data.y
-        self.__type = data.metadata.z_type
-        self.__cost = self.__type.value
-        self.__color = data.metadata.color
-        self._tag = data.tag
+        self.__name: str = data.name
+        self.__x: int = data.x
+        self.__y: int = data.y
+        zt = data.metadata.z_type
+        self.__type: ZoneType = zt if zt is not None else ZoneType.NORMAL
+        self.__cost: float = self.__type.value
+        self.__color: ParsingColors = data.metadata.color
+        self._tag: Tag = data.tag
 
         max_d = data.metadata.max_drones
         self.MAX_DRONES: Final[int] = max_d if max_d is not None else 1
@@ -60,7 +61,7 @@ class Zone:
         """Return the zone's vertical coordinate."""
         return self.__y
 
-    def get_cost(self) -> int:
+    def get_cost(self) -> float:
         """Return the movement cost associated with the zone."""
         return self.__cost
 

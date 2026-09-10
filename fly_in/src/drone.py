@@ -88,14 +88,14 @@ class Drone:
         """Return whether the drone is currently at the end hub."""
         where = self.get_where()
         if isinstance(where, Zone):
-            return where == Tag.END_HUB
+            return where._tag == Tag.END_HUB
         return False
 
     def at_start(self) -> bool:
         """Return whether the drone is currently at the start hub."""
         where = self.get_where()
         if isinstance(where, Zone):
-            return where == Tag.START_HUB
+            return where._tag == Tag.START_HUB
         return False
 
     @classmethod

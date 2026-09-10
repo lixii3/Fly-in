@@ -1,4 +1,5 @@
 import pygame as pg
+from typing import cast, Sequence
 
 
 class PNGButton(pg.sprite.Sprite):
@@ -11,13 +12,13 @@ class PNGButton(pg.sprite.Sprite):
         x: int = 0,
         y: int = 0,
         text: str = "",
-        font: pg.font.Font = None,
-        text_color: tuple = (255, 255, 255),
-        outline_color: tuple = (0, 0, 0),
+        font: pg.font.Font | None = None,
+        text_color: tuple[int, int, int] = (255, 255, 255),
+        outline_color: tuple[int, int, int] = (0, 0, 0),
         outline_thickness: int = 2,
-        glow_color=(255, 255, 0),
-        glow_radius=15,
-        glow_passes=10,
+        glow_color: tuple[int, int, int] = (255, 255, 0),
+        glow_radius: int = 15,
+        glow_passes: int = 10,
     ):
         """Create a clickable image button with optional text and glow.
 
@@ -53,7 +54,8 @@ class PNGButton(pg.sprite.Sprite):
 
             # Ricava la lista dei rettangoli dei pixel visibili
             mask = pg.mask.from_surface(loaded_image)
-            rects = mask.get_bounding_rects()
+            rects: Sequence[pg.Rect] = cast(Sequence[pg.Rect],
+                                            mask.get_bounding_rects())
 
             if rects:
                 # Unisce tutti i rettangoli trovati in un unico
@@ -85,7 +87,7 @@ class PNGButton(pg.sprite.Sprite):
             self.glow_image = self._create_glow_image()
         self.mask = pg.mask.from_surface(self.original_image)
 
-    def __deepcopy__(self, memo):
+    def __deepcopy__(self, memo: dict[int, "PNGButton"]) -> "PNGButton":
         """Create an independent copy of the button and its surfaces.
 
         Args:
@@ -302,7 +304,7 @@ class PNGButton(pg.sprite.Sprite):
                 )
             )
 
-    def is_clicked(self, event_list: list) -> bool:
+    def is_clicked(self, event_list: list[pg.event.Event]) -> bool:
         """Return whether a left-click occurred while hovered.
 
         Args:

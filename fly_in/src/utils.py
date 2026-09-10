@@ -27,7 +27,7 @@ class Tag(Enum):
     CONNECTION = "connection"
 
     @classmethod
-    def get(cls, tag: str):
+    def get(cls, tag: str) -> "Tag" | None:
         """Convert a tag string to a tag enum member.
 
         Args:
@@ -48,7 +48,7 @@ class ZoneType(Enum):
     BLOCKED = 99999999999999
 
     @classmethod
-    def get(cls, zone: str):
+    def get(cls, zone: str) -> "ZoneType" | None:
         """Convert a zone type string to an enum member.
 
         Args:
@@ -83,7 +83,7 @@ class ParsingColors(Enum):
     PINK = "#E994D7"
 
     @classmethod
-    def getColor(cls, color: str):
+    def get(cls, color: str) -> "ParsingColors":
         """Convert a color name to an enum member.
 
         Args:
@@ -114,7 +114,7 @@ class Mode(Enum):
                 return self.MENU
 
     @classmethod
-    def get(cls, mode: str):
+    def get(cls, mode: str) -> "Mode":
         """Convert a mode string to a mode enum member.
 
         Args:

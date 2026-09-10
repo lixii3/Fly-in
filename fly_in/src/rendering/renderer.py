@@ -401,7 +401,8 @@ class GraphRenderer:
         cls,
         conn: Connection,
         surface: pg.Surface,
-        normalizer_funct: Callable | None = None,
+        normalizer_funct: Callable[[float, float],
+                                   tuple[float, float]] | None = None,
     ) -> None:
         """Draw a connection line on a surface.
 
@@ -414,8 +415,8 @@ class GraphRenderer:
         color.a = 255
         xa, ya = conn.get_zoneA().get_coordinates()
         xb, yb = conn.get_zoneB().get_coordinates()
-        start = (xa, ya)
-        end = (xb, yb)
+        start: tuple[float, float] = (float(xa), float(ya))
+        end: tuple[float, float] = (float(xb), float(yb))
         if normalizer_funct:
             start = normalizer_funct(xa, ya)
             end = normalizer_funct(xb, yb)
@@ -426,7 +427,8 @@ class GraphRenderer:
         cls,
         zone: Zone,
         surface: pg.Surface,
-        normalizer_funct: Callable | None = None,
+        normalizer_funct: Callable[[float, float],
+                                   tuple[float, float]] | None = None,
         img: pg.Surface | None = None,
         radius: int = 30,
     ) -> None:
@@ -441,9 +443,9 @@ class GraphRenderer:
         """
         color = zone.get_color().value
         x, y = zone.get_coordinates()
-        center = (x, y)
+        center: tuple[float, float] = (float(x), float(y))
         if normalizer_funct:
-            center = normalizer_funct(x, y)
+            center = normalizer_funct(float(x), float(y))
         if img is None:
             pg.draw.circle(surface, color, center, radius)
         else:
@@ -467,7 +469,8 @@ class GraphRenderer:
         Returns:
             Callable[[int, int], tuple[int, int]]: Coordinate mapper used.
         """
-        to_screen: Callable = calcola_trasformazione(
+        to_screen: Callable[[float, float],
+                            tuple[float, float]] = calcola_trasformazione(
             graph.get_zones(), surface.get_width(), surface.get_height()
         )
         for c in graph.get_connections():
@@ -504,7 +507,8 @@ class DroneRenderer:
         self,
         screen: pg.Surface,
         d: Drone,
-        ft_mapping: Callable[[float, float], tuple[float, float]] | None = None,
+        ft_mapping: Callable[[float, float],
+                             tuple[float, float]] | None = None,
     ) -> None:
         """Draw one drone at its interpolated position.
 
@@ -544,7 +548,8 @@ class DroneRenderer:
         self,
         screen: pg.Surface,
         graph: Graph,
-        ft_mapping: Callable[[float, float], tuple[float, float]] | None = None,
+        ft_mapping: Callable[[float, float],
+                             tuple[float, float]] | None = None,
     ) -> None:
         """Draw every drone in a graph.
 
@@ -575,7 +580,7 @@ class DroneRenderer:
         if where is None or last_p is None:
             return (0.0, 0.0)
         end_x, end_y = where.get_coordinates()
-        
+
         # Se il drone è fermo o non ha una posizione precedente
         if not last_p or\
            where == last_p:

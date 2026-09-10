@@ -18,7 +18,7 @@ class ApplicationException(Exception):
         cls.msg = msg
         super().__init__(msg)
 
-    def __str__(cls):
+    def __str__(cls) -> str:
         """Return the exception message."""
         return cls.msg
 
@@ -57,7 +57,7 @@ class Application:
         pg.quit()
 
     @classmethod
-    def _handle_events(cls, events: list) -> None:
+    def _handle_events(cls, events: list[pg.event.Event]) -> None:
         """Process window, keyboard, and active-button events.
 
         Args:

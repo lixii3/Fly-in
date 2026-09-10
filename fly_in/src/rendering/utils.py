@@ -3,8 +3,9 @@ from typing import Callable
 
 
 def calcola_trasformazione(
-    nodi: list[Zone], width: int, height: int, padding=50
-) -> Callable:
+    nodi: list[Zone], width: int,
+    height: int, padding: int = 50
+) -> Callable[[float, float], tuple[float, float]]:
     """Create a function mapping graph coordinates to screen coordinates.
 
     Args:

@@ -21,7 +21,7 @@ class GraphException(Exception):
         self.msg = msg
         super().__init__(msg)
 
-    def __str__(self):
+    def __str__(self) -> str:
         """Return the exception message."""
         return self.msg
 
@@ -245,7 +245,6 @@ class Graph:
         start_h = float(self.manhattan_distance(start_zone, end_zone))
         visited: set[tuple[str, int]] = set()
         path: Optional[List[Tuple[Action, Zone | Connection, int]]]
-        
         heapq.heappush(
             queue,
             (
