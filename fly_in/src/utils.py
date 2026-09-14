@@ -111,7 +111,7 @@ class Mode(Enum):
             case Mode.LEVELS:
                 return Mode.MAPS
             case _:
-                return self.MENU
+                return Mode.MENU
 
     @classmethod
     def get(cls, mode: str) -> "Mode":

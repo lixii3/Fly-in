@@ -49,8 +49,7 @@ class MetaData(BaseModel):
 
     @classmethod
     def default_meta(cls, tag: Tag) -> "MetaData":
-        return cls(tag=Tag.CONNECTION)
-
+        return MetaData(tag=tag)
 
 class HubData(BaseModel):
     """Validated hub declaration from a map file."""
@@ -136,23 +135,23 @@ class MapData(BaseModel):
         links = list(zip(connA, connB))
         visti: set[tuple[str, str]] = set()
 
-        # check for duplicated connections
+        # check for duplicated connections (even if reversed)
         for ln in links:
             l1: tuple[str, str] = cast(tuple[str, str], tuple(ln))
-            if l1 in visti:
+            lrev: tuple[str, str] = (l1[1], l1[0])
+            if l1 in visti or lrev in visti:
                 raise ValueError(f"Duplicted connection: '{ln[0]}-{ln[1]}'")
             else:
                 visti.add(l1)
+                visti.add(lrev)
 
         for h in self.hubs:
             if h.tag == Tag.START_HUB:
                 has_start += 1
             elif h.tag == Tag.END_HUB:
                 has_end += 1
-            # controllo che le hubs siano ben connesse
-            if h.name not in connA and h.name not in connB:
-                raise ValueError("Unreachable node")
-            elif names.count(h.name) != 1:
+            # controllo che non ci siano hub duplicate
+            if names.count(h.name) != 1:
                 raise ValueError(f"Duplicated hub name in map: '{h.name}")
 
         if has_start != 1 or has_end != 1:
