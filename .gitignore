@@ -1,7 +1,7 @@
 .mypy_cache/
 */.mypy_cache/
 __pycache__/
-/__pycache__/
+*/__pycache__/
 .venv
 subject.pdf
 en.subject.PDF
