@@ -63,7 +63,8 @@ class Renderer:
             img = self.sprites["drone"]
             self.__dr: DroneRenderer = DroneRenderer(img)
         except KeyError:
-            raise RenderException("Couldn't find drone png resource")
+            print("Couldn't find drone png resource")
+            exit()
 
     def _load_resources(self) -> None:
         """Load fonts, backgrounds, buttons, and sprites from resources."""
@@ -258,7 +259,7 @@ class Renderer:
             try:
                 self.__scheduler.schedule()
             except SchedulerException as e:
-                raise RenderException(str(e))
+                raise e
             self.__turn_timer = 0
             self.__current_turn = 1
 
@@ -277,8 +278,10 @@ class Renderer:
                     __flying_layout()
                 case _:
                     self.render_mode(Mode.NONE, "")
-        except RenderException as e:
-            raise e
+        except (RenderException, ParsingException,
+                MultipleParsingExceptions, SchedulerException) as e:
+            print(e)
+            exit()
 
     def _draw(self, mode: Mode) -> None:
         """Draw the current background, graph, drones, and buttons.

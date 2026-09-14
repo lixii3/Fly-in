@@ -38,13 +38,14 @@ class Application:
             ApplicationException: If rendering or event handling fails.
         """
         cls.MODE = Mode.MENU
+        cls.__running = True
         try:
             cls.__renderer = Renderer()
             cls._change_mode(cls.MODE)
         except RenderException as e:
-            raise ApplicationException(str(e))
+            print(str(e))
+            cls.__running = False
         # application loop
-        cls.__running = True
         while cls.__running:
             events = pg.event.get()
             try:
@@ -53,7 +54,8 @@ class Application:
                 cls.__renderer._draw(cls.MODE)
                 cls.__renderer.update_frame()
             except RenderException as e:
-                raise ApplicationException(str(e))
+                print(str(e))
+                cls.__running = False
         pg.quit()
 
     @classmethod

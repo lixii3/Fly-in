@@ -51,6 +51,7 @@ class MetaData(BaseModel):
     def default_meta(cls, tag: Tag) -> "MetaData":
         return MetaData(tag=tag)
 
+
 class HubData(BaseModel):
     """Validated hub declaration from a map file."""
 

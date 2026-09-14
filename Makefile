@@ -27,8 +27,8 @@ lint:
 								--check-untyped-defs
 
 lint-strict:
-	flake8 $(NAME) fly_in
-	mypy $(NAME) fly_in --strict
+	$(BIN)/flake8 $(NAME) fly_in
+	$(BIN)/mypy $(NAME) fly_in --strict
 
 build:
 	poetry build -f wheel
