@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fly_in.src.utils import ParsingColors, Tag
+from fly_in.src.utils import Tag
 from fly_in.src.validation_models import ConnectionData, MetaData
 from typing import Final, Iterable, TYPE_CHECKING, cast
 from pydantic import ValidationError
@@ -29,7 +29,7 @@ class ConnectionException(Exception):
 class Connection:
     """Represent a link between two zones and its turn reservations."""
     @classmethod
-    def get_conn(
+    def create_conn(
         cls,
         name: str,
         zoneA: Zone,
@@ -41,7 +41,7 @@ class Connection:
         try:
             metadata: MetaData = MetaData(
                 tag=Tag.CONNECTION,
-                color=ParsingColors.get(color),
+                color=color,
                 max_link_capacity=max_link_capacity,
             )
             data: ConnectionData = ConnectionData(name=name, metadata=metadata)
@@ -58,7 +58,7 @@ class Connection:
         """
         self.__name: Final[str] = data.name
         self.__arch: tuple[Zone, Zone]
-        self.__color: ParsingColors = data.metadata.color
+        self.__color: str = data.metadata.color
         max_l = data.metadata.max_link_capacity
         self.MAX_LINK_CAPACITY: Final[int] = max_l if max_l is not None else 1
         self.__reservations: dict[int, int] = {}
@@ -79,7 +79,7 @@ class Connection:
         """Return the connection name."""
         return self.__name
 
-    def get_color(self) -> ParsingColors:
+    def get_color(self) -> str:
         """Return the configured connection color."""
         return self.__color
 

@@ -1,5 +1,5 @@
 from fly_in.src.graph import Graph, GraphException
-from fly_in.src.utils import ParsingColors, Tag, ZoneType
+from fly_in.src.utils import Tag, ZoneType
 from fly_in.src.validation_models import MetaData, ConnectionData, \
     HubData, MapData
 from typing import List, Dict, cast
@@ -263,7 +263,7 @@ class Parser:
         _tags: tuple[str, str, str, str] = ("color", "zone",
                                             "max_drones",
                                             "max_link_capacity")
-        meta_dict: Dict[str, Tag | ZoneType | int | ParsingColors | None] = {}
+        meta_dict: Dict[str, Tag | ZoneType | int | str | None] = {}
         metadata: List[str] = row.split()
         key: str
         value: str
@@ -289,7 +289,7 @@ class Parser:
                     raise ParsingException(msg="Invalid zone valuein "
                                            "metadata")
             elif key == "color":
-                meta_dict[key] = ParsingColors.get(value)
+                meta_dict[key] = str(value);
                 if meta_dict[key] is None:
                     raise ParsingException(msg="Invalid color value metadata")
             elif key == "max_drones" or key == "max_link_capacity":
@@ -314,8 +314,7 @@ class Parser:
             data = MetaData(
                 tag=tag,
                 z_type=cast(ZoneType, meta_dict.get("zone")),
-                color=cast(ParsingColors,
-                           meta_dict.get("color", ParsingColors.WHITE)),
+                color=meta_dict.get("color", "white"),
                 max_drones=max_d,
                 max_link_capacity=max_l,
                 nb_drones=nb_drones)

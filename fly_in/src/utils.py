@@ -64,36 +64,36 @@ class ZoneType(Enum):
         return self.name.lower()
 
 
-class ParsingColors(Enum):
-    """Colors accepted in map metadata."""
-
-    RED = "#FF0000"
-    MAGENTA = "#FF00FF"
-    GREEN = "#008000"
-    LIME = "#00FF00"
-    BLUE = "#0000FF"
-    CYAN = "#00B7FF"
-    PURPLE = "#2E2BFA"
-    YELLOW = "#FFFF00"
-    GOLD = "#FFD700"
-    ORANGE = "#FFA500"
-    BROWN = "#A52A2A"
-    WHITE = "#FFFFFF"
-    BLACK = "#000000"
-    PINK = "#E994D7"
-
-    @classmethod
-    def get(cls, color: str) -> "ParsingColors":
-        """Convert a color name to an enum member.
-
-        Args:
-            color (str): Color name to look up.
-
-        Returns:
-            ParsingColors: Matching color, or white when unknown.
-        """
-        return cls.__members__.get(color.upper(), ParsingColors.WHITE)
-
+#class ParsingColors(Enum):
+#    """Colors accepted in map metadata."""
+#
+#    RED = "#FF0000"
+#    MAGENTA = "#FF00FF"
+#    GREEN = "#008000"
+#    LIME = "#00FF00"
+#    BLUE = "#0000FF"
+#    CYAN = "#00B7FF"
+#    PURPLE = "#2E2BFA"
+#    YELLOW = "#FFFF00"
+#    GOLD = "#FFD700"
+#    ORANGE = "#FFA500"
+#    BROWN = "#A52A2A"
+#    WHITE = "#FFFFFF"
+#    BLACK = "#000000"
+#    PINK = "#E994D7"
+#
+#    @classmethod
+#    def get(cls, color: str) -> "ParsingColors":
+#        """Convert a color name to an enum member.
+#
+#        Args:
+#            color (str): Color name to look up.
+#
+#        Returns:
+#            ParsingColors: Matching color, or white when unknown.
+#        """
+#        return cls.__members__.get(color.upper(), ParsingColors.WHITE)
+#
 
 class Mode(Enum):
     """Screens available in the application UI."""

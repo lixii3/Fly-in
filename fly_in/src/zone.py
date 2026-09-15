@@ -1,5 +1,5 @@
 from __future__ import annotations
-from fly_in.src.utils import ZoneType, ParsingColors, Tag
+from fly_in.src.utils import ZoneType, Tag
 from typing import Final, TYPE_CHECKING
 from fly_in.src.validation_models import HubData
 
@@ -41,7 +41,7 @@ class Zone:
         zt = data.metadata.z_type
         self.__type: ZoneType = zt if zt is not None else ZoneType.NORMAL
         self.__cost: float = self.__type.value
-        self.__color: ParsingColors = data.metadata.color
+        self.__color: str = data.metadata.color
         self._tag: Tag = data.tag
 
         max_d = data.metadata.max_drones
@@ -69,7 +69,7 @@ class Zone:
         """Return the zone type."""
         return self.__type
 
-    def get_color(self) -> ParsingColors:
+    def get_color(self) -> str:
         """Return the configured zone color."""
         return self.__color
 

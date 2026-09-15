@@ -444,14 +444,17 @@ class GraphRenderer:
             img (pg.Surface | None, optional): Optional zone sprite.
             radius (int, optional): Circle radius. Defaults to 30.
         """
-        color = zone.get_color().value
+        color = zone.get_color()
         x, y = zone.get_coordinates()
         center: tuple[float, float] = (float(x), float(y))
         if normalizer_funct:
             center = normalizer_funct(float(x), float(y))
-        if img is None:
-            pg.draw.circle(surface, color, center, radius)
-        else:
+        try:
+            color_c = pg.Color(color)
+        except ValueError:
+            color_c = pg.Color("white")
+        pg.draw.circle(surface, color_c, center, radius)
+        if img is not None:
             img_rect = img.get_rect(center=center)
             surface.blit(img, img_rect)
 

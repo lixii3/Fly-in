@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 from typing import cast
-from fly_in.src.utils import ParsingColors, Tag, ZoneType
+from fly_in.src.utils import Tag, ZoneType
 
 
 class MetaData(BaseModel):
@@ -9,7 +9,7 @@ class MetaData(BaseModel):
 
     tag: Tag
     z_type: ZoneType | None = None
-    color: ParsingColors = ParsingColors.WHITE
+    color: str = "white"
     max_drones: int | None = Field(ge=0, default=None)
     max_link_capacity: int | None = Field(ge=0, default=None)
     nb_drones: int = 0
