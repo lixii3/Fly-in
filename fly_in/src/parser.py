@@ -289,7 +289,7 @@ class Parser:
                     raise ParsingException(msg="Invalid zone valuein "
                                            "metadata")
             elif key == "color":
-                meta_dict[key] = str(value);
+                meta_dict[key] = str(value)
                 if meta_dict[key] is None:
                     raise ParsingException(msg="Invalid color value metadata")
             elif key == "max_drones" or key == "max_link_capacity":
@@ -314,7 +314,7 @@ class Parser:
             data = MetaData(
                 tag=tag,
                 z_type=cast(ZoneType, meta_dict.get("zone")),
-                color=meta_dict.get("color", "white"),
+                color=str(meta_dict.get("color", "white")),
                 max_drones=max_d,
                 max_link_capacity=max_l,
                 nb_drones=nb_drones)

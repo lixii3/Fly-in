@@ -64,7 +64,7 @@ class ZoneType(Enum):
         return self.name.lower()
 
 
-#class ParsingColors(Enum):
+# class ParsingColors(Enum):
 #    """Colors accepted in map metadata."""
 #
 #    RED = "#FF0000"

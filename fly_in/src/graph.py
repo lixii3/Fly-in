@@ -167,7 +167,7 @@ class Graph:
             lines.append(
                 f"  - {zone.get_name()}: x={zone.get_x()}, y={zone.get_y()}, "
                 f"type={zone.get_type().name}, cost={zone.get_cost()}, "
-                f"color={zone.get_color().name}, max_drones={zone.MAX_DRONES}"
+                f"color={zone.get_color()}, max_drones={zone.MAX_DRONES}"
             )
 
         lines.append("Connections:")
@@ -176,7 +176,7 @@ class Graph:
             lines.append(
                 f"  - {connection.get_name()}: {zone_names[0]} "
                 f"<-> {zone_names[1]}, "
-                f"color={connection.get_color().name}"
+                f"color={connection.get_color()}"
                 f"max_link_capacity={connection.MAX_LINK_CAPACITY}"
             )
 
